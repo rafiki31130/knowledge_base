@@ -16,3 +16,12 @@ Fiches expliquant le fonctionnement interne de Splunk. Cibles typiques :
 
 Une fiche par concept, focalisée sur les principes et les pièges, sans détail
 de configuration spécifique à un environnement.
+
+## Fiches existantes
+
+- [Deployment Server](./deployment-server.md)
+- [Parsing phase : UF vs HF/indexer](./parsing-phase-uf-vs-hf.md)
+- [Cycle de vie des buckets en multisite](./buckets-multisite-lifecycle.md)
+- [Rebalance multisite](./rebalance-multisite.md)
+- [ITSI + Federated Search](./itsi-federated-search.md)
+- [Patrons de CI/CD pour déploiement Splunk](./cicd-deployment-patterns.md)

@@ -20,3 +20,7 @@ cas d'investigation. Pas de requête extraite d'un environnement réel.
 - Pas de seuils issus d'un client : si un seuil est cité, expliquer comment le
   calibrer plutôt que donner « la » valeur.
 - Pas de TTP attribuée à un acteur précis sans source publique citée.
+
+## Fiches existantes
+
+- [Détecter les buckets sous RF/SF](./buckets-degrades-detection.md)
