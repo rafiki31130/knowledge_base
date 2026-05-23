@@ -154,6 +154,150 @@ git cherry-pick <commit>          # appliquer un commit isolé sur la branche co
 
 `git reflog` permet de retrouver des commits "perdus" après un reset --hard ou un rebase raté, tant que le garbage collector n'est pas passé (~30 jours par défaut).
 
+## Enchaînements classiques (sur lesquels la plupart butent)
+
+### Pousser une nouvelle branche locale vers le remote
+
+```bash
+git switch -c ma-feature
+# ...commits...
+git push -u origin ma-feature     # -u crée le suivi : ensuite `git push` suffit
+```
+
+### Récupérer une branche distante créée par un collègue
+
+```bash
+git fetch origin
+git switch ma-feature             # crée la branche locale qui suit origin/ma-feature
+# variante explicite :
+git switch -c ma-feature --track origin/ma-feature
+```
+
+### Mettre à jour sa branche avec `main` (rebase propre)
+
+```bash
+git fetch origin
+git rebase origin/main
+# en cas de conflit :
+#   éditer les fichiers, puis :
+git add <fichier-résolu>
+git rebase --continue
+# si on s'embourbe :
+git rebase --abort
+```
+
+### Re-pousser après un rebase (sans écraser le travail d'autrui)
+
+```bash
+git push --force-with-lease       # refuse de pousser si quelqu'un d'autre a poussé entre-temps
+```
+À préférer systématiquement à `--force` sur une branche partagée (PR).
+
+### J'ai commité sur `main` par erreur, je veux déplacer ces commits sur une branche
+
+```bash
+git branch ma-feature             # crée la branche au HEAD actuel (garde les commits)
+git reset --hard origin/main      # remet main à l'état du remote
+git switch ma-feature             # le travail est ici
+```
+
+### Squash des N derniers commits en un seul
+
+```bash
+git rebase -i HEAD~3
+# dans l'éditeur : laisser "pick" sur le 1er, mettre "squash" (ou "s") sur les suivants
+# sauvegarder, puis éditer le message final
+```
+
+### Annuler un commit déjà poussé (sans réécrire l'historique)
+
+```bash
+git revert <hash>                 # crée un commit qui inverse les changements
+git push
+```
+
+### Récupérer un seul fichier depuis une autre branche
+
+```bash
+git checkout autre-branche -- chemin/fichier
+# ou (moderne) :
+git restore --source=autre-branche -- chemin/fichier
+```
+
+### Sortir d'un état "detached HEAD" sans perdre le travail
+
+```bash
+git switch -c sauvegarde          # transforme l'état détaché en vraie branche
+```
+
+### Résoudre un conflit pendant un merge
+
+```bash
+git merge ma-branche
+# conflits → éditer les fichiers (chercher <<<<<<<)
+git add <fichier-résolu>
+git commit                        # message de merge pré-rempli
+# ou tout annuler :
+git merge --abort
+```
+
+### Renommer une branche locale ET côté remote
+
+```bash
+git branch -m ancien nouveau
+git push origin -u nouveau
+git push origin --delete ancien
+```
+
+### Synchroniser un fork avec l'upstream
+
+```bash
+git remote add upstream <url-du-repo-original>     # une fois pour toutes
+git fetch upstream
+git switch main
+git rebase upstream/main          # ou : git merge upstream/main
+git push                          # met à jour le fork
+```
+
+### Supprimer un fichier sensible déjà commité (et le .gitignore-er)
+
+```bash
+echo ".env" >> .gitignore
+git rm --cached .env
+git commit -m "Retire .env du suivi"
+git push
+```
+Le fichier reste dans l'historique. Pour purge complète : `git filter-repo` (rotation des secrets recommandée à la place).
+
+### "Oups, j'ai fait `reset --hard`, j'ai tout perdu"
+
+```bash
+git reflog                        # repérer le hash d'avant le reset
+git reset --hard <hash>
+```
+
+### Mettre de côté pour faire un `git pull` rapide
+
+```bash
+git stash -u
+git pull --rebase
+git stash pop
+# si conflit au pop : résoudre, puis `git stash drop` pour nettoyer
+```
+
+### Réécrire le message du dernier commit (déjà poussé)
+
+```bash
+git commit --amend -m "Nouveau message"
+git push --force-with-lease
+```
+
+### Supprimer toutes les branches locales déjà fusionnées
+
+```bash
+git branch --merged main | grep -v '^\*\| main$' | xargs -n 1 git branch -d
+```
+
 ## .gitignore
 
 ```bash
