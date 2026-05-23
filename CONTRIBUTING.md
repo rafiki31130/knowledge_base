@@ -34,9 +34,26 @@ En cas de doute : **anonymiser ou ne pas écrire**.
 ## Style
 
 - Markdown, une idée par fichier, titre H1 unique par page.
-- Liens relatifs entre pages du dépôt.
 - Blocs de code annotés (` ```spl `, ` ```bash `, etc.).
 - Français par défaut ; anglais accepté pour un sujet déjà cadré en anglais.
+
+## Format des liens
+
+Le dépôt est lu sur **GitHub**. Seule la syntaxe markdown standard est rendue.
+
+- **Liens internes** : markdown standard avec **chemin relatif** depuis le fichier courant.
+  - Même dossier : `[texte](./autre-fiche.md)`
+  - Parent : `[texte](../section/fiche.md)`
+  - Ancre vers une section : `[texte](./fiche.md#nom-de-section)` (slug = lowercase, espaces→`-`, ponctuation supprimée).
+- **Extension `.md` obligatoire.**
+- **Wikilinks Obsidian `[[...]]` interdits** — non rendus par GitHub, s'affichent littéralement.
+- **Liens externes** : URL complète https. Préférer des sources officielles (docs vendeur, RFC).
+
+## Pas de duplication
+
+- Une idée vit à un seul endroit du dépôt. Ailleurs : un lien.
+- Si deux fiches commencent à se chevaucher, en extraire le tronc commun dans une troisième fiche que les deux référencent.
+- Un court rappel inline reste acceptable s'il pointe vers la source.
 
 ## Workflow
 
