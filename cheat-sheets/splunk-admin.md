@@ -71,7 +71,7 @@ splunk search 'index=<index> error | head 20' -auth admin:"$SPLUNK_PASSWORD"
 splunk search 'index=<index> | stats count' -earliest_time -1h -latest_time now
 
 # Format de sortie
-splunk search 'index=<index> | head 5' -output csv     # csv | json | raw | table
+splunk search 'index=<index> | head 5' -output csv     # format de sortie (ex. table, csv)
 splunk search 'index=<index> | head 5' -maxout 0       # ne pas tronquer (0 = illimité)
 ```
 

@@ -49,10 +49,11 @@ claude -p "<prompt>" --output-format json     # text | json | stream-json
 
 ### Configuration des serveurs MCP
 
-Les serveurs MCP se déclarent sous la clé `mcpServers` d'un fichier de configuration
-(p. ex. `settings.json` selon la portée : projet ou utilisateur). Deux transports
-courants : **stdio** (le serveur est un processus local lancé par Claude) et **http**
-(serveur distant joint par HTTP).
+Les serveurs MCP se déclarent sous la clé `mcpServers`, à la racine d'un fichier de
+configuration dont le nom dépend de la portée : **`.mcp.json`** pour la portée projet
+(partagé, commité dans le dépôt) et **`~/.claude.json`** pour la portée utilisateur.
+Deux transports courants : **stdio** (le serveur est un processus local lancé par
+Claude) et **http** (serveur distant joint par HTTP).
 
 ```jsonc
 {
@@ -81,7 +82,8 @@ courants : **stdio** (le serveur est un processus local lancé par Claude) et **
 # Gestion des serveurs via la CLI (selon version) :
 claude mcp list                      # lister les serveurs MCP configurés
 claude mcp get <server>              # détails d'un serveur
-claude mcp add <server> --transport http --url https://mcp.example.com
+claude mcp add --transport http <server> https://mcp.example.com   # serveur HTTP (URL positionnelle)
+claude mcp add <server> -- <commande> [args...]                    # serveur stdio (-- sépare la commande)
 claude mcp remove <server>           # retirer un serveur
 ```
 
@@ -106,14 +108,15 @@ pas à `tools/list` n'exposera aucun outil dans la session.
 
 ## Pièges fréquents
 
-- **Secret en clair dans `settings.json`** : ne jamais écrire un token littéral dans la
-  config. Le référencer via `${VAR}` (variable d'environnement) ou un gestionnaire de
-  secrets. Une config versionnée peut fuiter.
+- **Secret en clair dans le fichier de config** : ne jamais écrire un token littéral
+  dans le `.mcp.json` (ou `~/.claude.json`). Le référencer via `${VAR}` (variable
+  d'environnement) ou un gestionnaire de secrets. Une config versionnée peut fuiter.
 - **Portée de la config** : une même clé peut exister au niveau projet et utilisateur ;
   la plus spécifique l'emporte. Un serveur « invisible » vient souvent d'un fichier édité
   au mauvais niveau.
-- **JSON invalide = aucun serveur chargé** : une virgule en trop dans `settings.json`
-  invalide tout le bloc `mcpServers`. Valider le JSON après édition.
+- **JSON invalide = aucun serveur chargé** : une virgule en trop dans le fichier de
+  config (`.mcp.json` / `~/.claude.json`) invalide tout le bloc `mcpServers`. Valider le
+  JSON après édition.
 - **Transport stdio qui échoue silencieusement** : si `command` n'est pas dans le `PATH`
   ou plante au démarrage, le serveur reste « non connecté ». Le lancer à la main pour voir
   l'erreur, puis `--debug`.
