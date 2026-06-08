@@ -26,3 +26,8 @@ Chaque fiche suit la même structure :
 - [Ansible](./ansible.md) — `ansible-playbook`, ad-hoc, `ansible-vault`, `ansible-galaxy`.
 - [GitHub CLI (gh)](./gh-cli.md) — auth, `gh repo/pr/issue/run`, `gh api` (git lui-même → [git.md](./git.md)).
 - [Secrets & SSH](./secrets-ssh.md) — 1Password CLI `op`, clés SSH, `~/.ssh/config`, agent, tunnels, `scp`/`sftp`.
+- [Splunk (administration / CLI)](./splunk-admin.md) — CLI admin `splunk` : start/stop, `btool`, `search`, index, `_internal` (SPL → [splunk/](../splunk/README.md)).
+- [NetBox (API REST)](./netbox-api.md) — API `curl` (`dcim`, `ipam`), filtres/pagination, client `pynetbox`.
+- [Home Assistant (CLI & API)](./home-assistant.md) — CLI `ha`, `check_config`, API REST `/api/states` & `/api/services`, reload YAML.
+- [Claude Code & MCP](./claude-code-mcp.md) — CLI `claude`, config `mcpServers` (stdio/http), debug MCP (`tools/list`).
+- [Stack média conteneurisée](./stack-media.md) — patterns conteneurs, `qbittorrent-nox`, API *arr (`X-Api-Key`), VPN gluetun (Docker → [docker.md](./docker.md)).
