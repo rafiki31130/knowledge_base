@@ -15,3 +15,8 @@ Cibles typiques :
 - **Identités** : SID, UPN, sAMAccountName, OAuth/OIDC notions de base.
 
 Chaque fiche reste générique et publiable.
+
+## Fiches existantes
+
+- [Formats de logs courants et leurs pièges de parsing](./formats-logs-et-pieges-parsing.md)
+- [Regex pour les logs : greedy, ancres, lookaround](./regex-pour-logs.md)

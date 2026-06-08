@@ -14,3 +14,7 @@ Cibles typiques :
 
 Une fiche décrit un **patron de raisonnement**, illustré par des exemples
 abstraits, sans cas réel.
+
+## Fiches existantes
+
+- [La boucle d'investigation : question → hypothèse → requête → pivot](./boucle-investigation.md)

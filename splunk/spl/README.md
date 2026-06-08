@@ -16,3 +16,8 @@ Cibles typiques :
 
 Format d'une fiche : but → forme générique → explication champ par champ →
 variantes → pièges.
+
+## Fiches existantes
+
+- [`_time` vs `_indextime` : ne pas les confondre](./time-vs-indextime.md)
+- [`stats` vs `eventstats` vs `streamstats`](./stats-eventstats-streamstats.md)
