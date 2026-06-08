@@ -22,7 +22,7 @@ ou inspecter les règles et états du pare-feu en console quand l'interface web 
 ip a                                 # adresses IP de toutes les interfaces
 ip a show <iface>                    # adresses d'une interface précise
 ip r                                 # table de routage (route par défaut incluse)
-ip r get 10.0.0.0                    # quelle route serait empruntée pour une dest.
+ip r get 10.0.0.10                   # quelle route serait empruntée pour une dest.
 ip -br a                             # vue condensée (1 ligne par interface)
 ip link set <iface> up               # activer une interface
 ```
