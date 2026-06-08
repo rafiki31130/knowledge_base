@@ -61,5 +61,6 @@ Branche unique : `main`. Pas de PR, pas de revue obligatoire.
 knowledge_base/
 ├── splunk/          — concepts, SPL, recherches génériques
 ├── methodologies/   — méthodes d'investigation, frameworks
-└── concepts/        — transverse : logs, regex, réseau…
+├── concepts/        — transverse : logs, regex, réseau…
+└── cheat-sheets/    — aide-mémoire commandes par techno
 ```

@@ -29,6 +29,7 @@ elle n'a pas sa place ici. Anonymiser ou reformuler.
 - [`splunk/`](./splunk) — Splunk : concepts, SPL, recherches génériques.
 - [`methodologies/`](./methodologies) — Méthodes d'investigation, frameworks.
 - [`concepts/`](./concepts) — Transverse : logs, regex, parsing, réseau…
+- [`cheat-sheets/`](./cheat-sheets) — Aide-mémoire commandes par techno.
 
 ## Workflow
 
