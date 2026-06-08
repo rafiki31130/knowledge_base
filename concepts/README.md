@@ -20,3 +20,6 @@ Chaque fiche reste générique et publiable.
 
 - [Formats de logs courants et leurs pièges de parsing](./formats-logs-et-pieges-parsing.md)
 - [Regex pour les logs : greedy, ancres, lookaround](./regex-pour-logs.md)
+- [Temps dans les logs : timezones, epoch, drift d'horloge](./temps-dans-les-logs.md)
+- [Encodages à reconnaître et décoder : base64, URL, hex](./encodages-courants.md)
+- [Identités dans les logs : SID, UPN, sAMAccountName, notions OIDC](./identites-dans-les-logs.md)
