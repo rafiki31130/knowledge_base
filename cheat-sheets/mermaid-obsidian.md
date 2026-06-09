@@ -80,6 +80,34 @@ flowchart TD
 - Liens : `-->` plein, `---` sans flèche, `-.->` pointillé, `==>` épais, `-- libellé -->` annoté.
 - `subgraph Nom["Titre"] … end` regroupe des nœuds.
 
+#### Annotations (« notes »)
+
+Le flowchart n'a **pas** de bloc `Note` natif (réservé à `sequenceDiagram`). On simule une
+annotation avec un nœud relié par un **lien pointillé sans flèche** (`-.-`), stylé en post-it :
+
+```mermaid
+flowchart LR
+  A[Étape 1] --> B[Étape 2] --> C[Étape 3]
+  N["📌 Note : B échoue si le cache est vide"]
+  B -.- N
+  style N fill:#fff8c4,stroke:#d4b106,stroke-width:1px
+```
+
+````markdown
+```mermaid
+flowchart LR
+  A[Étape 1] --> B[Étape 2] --> C[Étape 3]
+  N["📌 Note : B échoue si le cache est vide"]
+  B -.- N
+  style N fill:#fff8c4,stroke:#d4b106,stroke-width:1px
+```
+````
+
+- `-.-` = lien pointillé sans flèche : signale « annotation », pas un flux.
+- Le `style` jaune donne l'aspect post-it ; sans lui, c'est un nœud ordinaire.
+- Varier la forme pour distinguer la note : `N[/"texte"/]` parallélogramme, `N>"texte"]` drapeau.
+- `%%` reste réservé aux commentaires **du code** (non rendus) — ce n'est pas une note visible.
+
 ### Sequence (séquence / échanges)
 
 ```mermaid
