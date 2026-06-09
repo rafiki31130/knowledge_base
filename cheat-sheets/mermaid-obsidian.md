@@ -15,6 +15,10 @@ en mode Aperçu (et en Live Preview). Cette fiche couvre, de façon **génériqu
 de diagrammes les plus utiles et les **spécificités Obsidian** (liens internes vers des
 notes, thème, directives).
 
+> **Lecture de cette fiche.** Chaque exemple est donné **rendu** (le diagramme) suivi de son
+> **code source** juste en dessous, pour lire l'un en regardant l'autre. Le bloc de code est
+> copiable tel quel : il inclut la clôture ` ```mermaid `.
+
 > **Portabilité.** GitHub et Forgejo rendent aussi Mermaid, mais **pas** les extensions
 > propres à Obsidian (liens internes, thème). Un diagramme destiné à un `README` lu sur
 > GitHub/Forgejo doit rester en Mermaid « pur ». Voir [Pièges fréquents](#pièges-fréquents).
@@ -31,6 +35,15 @@ flowchart LR
   B -- non --> D[Action 2]
 ```
 ````
+
+…qui s'affiche :
+
+```mermaid
+flowchart LR
+  A[Début] --> B{Choix ?}
+  B -- oui --> C[Action 1]
+  B -- non --> D[Action 2]
+```
 
 - Premier mot = **type de diagramme** (`flowchart`, `sequenceDiagram`, …).
 - `%%` en début de ligne = **commentaire** (non rendu).
@@ -49,6 +62,17 @@ flowchart TD
   SVC --> DB[("Base")]
   SVC -.cache.-> RDS[("Cache")]
 ```
+
+````markdown
+```mermaid
+flowchart TD
+  subgraph Zone["Périmètre"]
+    API["API REST"] -->|read-only| SVC["Service"]
+  end
+  SVC --> DB[("Base")]
+  SVC -.cache.-> RDS[("Cache")]
+```
+````
 
 - Direction : `TD`/`TB` (haut→bas), `LR` (gauche→droite), `RL`, `BT`.
 - Formes : `[texte]` rectangle, `(texte)` arrondi, `([texte])` stade, `[(texte)]` cylindre/BDD,
@@ -69,6 +93,19 @@ sequenceDiagram
   Note over C,S: handshake terminé
 ```
 
+````markdown
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant S as Serveur
+  C->>S: Requête
+  activate S
+  S-->>C: Réponse
+  deactivate S
+  Note over C,S: handshake terminé
+```
+````
+
 - `->>` message plein, `-->>` réponse pointillée, `-x` échec.
 - `activate`/`deactivate` (ou `S->>+S` / `S-->>-C`) pour les barres d'activation.
 - `loop`, `alt`/`else`, `opt`, `par` pour les blocs de contrôle.
@@ -83,6 +120,16 @@ stateDiagram-v2
   Running --> [*]: kill
 ```
 
+````markdown
+```mermaid
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Running: start
+  Running --> Idle: stop
+  Running --> [*]: kill
+```
+````
+
 ### ER (entités-relations)
 
 ```mermaid
@@ -91,9 +138,17 @@ erDiagram
   ORDER ||--|{ LINE : contient
 ```
 
+````markdown
+```mermaid
+erDiagram
+  USER ||--o{ ORDER : passe
+  ORDER ||--|{ LINE : contient
+```
+````
+
 Cardinalités : `||` un, `o{` zéro-à-plusieurs, `|{` un-à-plusieurs.
 
-### Autres types utiles
+### Class (classes / héritage)
 
 ```mermaid
 classDiagram
@@ -101,6 +156,17 @@ classDiagram
   Animal : +int age
   Chien : +aboyer()
 ```
+
+````markdown
+```mermaid
+classDiagram
+  Animal <|-- Chien
+  Animal : +int age
+  Chien : +aboyer()
+```
+````
+
+### Autres types utiles
 
 - `gantt` — planning (sections, dates, durées).
 - `pie` — camembert (`pie title X` puis `"label" : valeur`).
@@ -121,6 +187,14 @@ flowchart LR
   class A,B internal-link
 ```
 
+````markdown
+```mermaid
+flowchart LR
+  A[Note Cible] --> B[Autre Note]
+  class A,B internal-link
+```
+````
+
 Cliquer sur `A` ouvre la note nommée « Note Cible ». **Ne fonctionne pas** sur GitHub/Forgejo
 (le `class … internal-link` y est ignoré).
 
@@ -135,6 +209,14 @@ flowchart LR
   A --> B
 ```
 
+````markdown
+```mermaid
+%%{init: {"theme": "neutral", "flowchart": {"curve": "linear"}}}%%
+flowchart LR
+  A --> B
+```
+````
+
 Thèmes : `default`, `neutral`, `dark`, `forest`, `base`. Avec `base`, on personnalise via
 `themeVariables`.
 
@@ -145,6 +227,14 @@ flowchart LR
   A[OK] --> B[Alerte]
   style B fill:#fdd,stroke:#c00,stroke-width:2px
 ```
+
+````markdown
+```mermaid
+flowchart LR
+  A[OK] --> B[Alerte]
+  style B fill:#fdd,stroke:#c00,stroke-width:2px
+```
+````
 
 ## Pièges fréquents
 
