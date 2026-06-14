@@ -30,6 +30,7 @@ elle n'a pas sa place ici. Anonymiser ou reformuler.
 - [`methodologies/`](./methodologies) — Méthodes d'investigation, frameworks.
 - [`concepts/`](./concepts) — Transverse : logs, regex, parsing, réseau…
 - [`cheat-sheets/`](./cheat-sheets) — Aide-mémoire commandes par techno.
+- [`handbooks/`](./handbooks) — Handbooks thématiques (livres Markdown) pour un profil de lecteur ciblé. Voir [`handbooks/README.md`](./handbooks/README.md) pour la structure d'un handbook.
 
 ## Workflow
 
