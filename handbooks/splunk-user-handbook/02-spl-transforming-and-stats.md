@@ -11,7 +11,7 @@ Keep these distinctions on hand before the rest of the chapter clicks.
 - **`top` / `rare`.** Wrappers around `stats count` + `sort` + `head` with surprise defaults (`limit=10`, `useother=t`).
 - **`eventstats` / `streamstats`.** Non-transforming aggregators. `eventstats` writes a dataset-wide aggregate back onto every row without collapsing. `streamstats` computes a running aggregate row by row, optionally inside a window. Both stay in the result pipeline — that is why you reach for them when `stats` would lose row context.
 - **`by` and cardinality.** Every `by` value expands the grid. `by host, user, action, sourcetype` over an hour of `linux_secure` is a cardinality blast that fills the dispatch directory and may truncate against `maxResultRows`.
-- **Defaults that bite.** `top` truncates at `limit=10`. `timechart` rolls past `limit` into `OTHER` and keeps `NULL`. `stats values()` does not truncate — it builds a 50 000-element list per row.
+- **Defaults that bite.** `top` truncates at `limit=10`. `timechart` rolls past `limit` into `OTHER` and keeps `NULL`. `stats values()` is the opposite hazard: the per-cell `maxvalues` ships unbounded by default, so a `values(*)` over a busy field can balloon to tens of thousands of elements per row before any role-level cap (`maxresultrows`, typically 50 000) kicks in downstream.
 
 ## Major good practices
 
