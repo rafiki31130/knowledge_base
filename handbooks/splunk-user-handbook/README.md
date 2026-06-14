@@ -29,7 +29,7 @@ Every chapter is independent. The proposed order is pedagogical, not mandatory: 
 | --- | --- | --- |
 | 0 | [Foundations — how Splunk thinks](00-foundations.md) | Available |
 | 1 | [SPL — anatomy of a good search](01-spl-search-anatomy.md) | Available |
-| 2 | [SPL — `stats`, transforming commands and the `\| stats` mindset](02-spl-transforming-and-stats.md) | (coming soon) |
+| 2 | [SPL — `stats`, transforming commands and the `\| stats` mindset](02-spl-transforming-and-stats.md) | Available |
 | 3 | [SPL — correlating events: joins, subsearches, lookups](03-spl-correlation-joins-lookups.md) | (coming soon) |
 | 4 | [SPL — acceleration: `tstats`, summary indexing, data models](04-spl-acceleration-tstats-datamodels.md) | (coming soon) |
 | 5 | [Dashboards and visualizations](05-dashboards-and-visualizations.md) | (coming soon) |
