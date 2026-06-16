@@ -1,5 +1,7 @@
 # Gouvernance des usages Splunk — guide d'approche
 
+> 🇬🇧 **English version available**: [`./EN/README.md`](./EN/README.md)
+
 > Guide d'approche pour mettre en place une gouvernance complète des usages
 > sur un Search Head Cluster (SHC) Splunk Enterprise de taille moyenne à
 > grande (centaines à milliers d'utilisateurs). Le guide consolide une
