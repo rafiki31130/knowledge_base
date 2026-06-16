@@ -104,6 +104,7 @@ Seuls les fichiers Markdown du livre lui-même sont publiés dans ce dossier.
 | Handbook | Statut | Profil cible | Description courte |
 | --- | --- | --- | --- |
 | `splunk-user-handbook/` | Phase 2 — rédaction en cours | Power user SecOps / IT, Splunk Enterprise 9.x on-prem, SPL1 | 9 chapitres : foundations, SPL (4), dashboards, alerts, apps/KO/RBAC, escalation cheatsheet. Anglais. |
+| `gouvernance-utilisateurs-splunk/` | Livré | Architecte / sysadmin senior Splunk, Splunk Enterprise 9.4.x on-prem, SHC | 8 chapitres : pourquoi gouverner, méthode de projet, quatre axes, findings empiriques 9.4.6, guide RBAC, guide WLM search heads, guide WLM indexers, recommandations chiffrées et glossaire. Français. |
 
 > Le dossier `splunk-user-handbook/` sera créé par les agents Rédacteurs en
 > phase 2 — il n'existe pas encore au moment où cette convention est posée.
