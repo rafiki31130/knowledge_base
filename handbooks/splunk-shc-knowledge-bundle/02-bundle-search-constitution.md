@@ -172,19 +172,16 @@ removedTimedOutServers = false
 
 ### Stanzas de mounted bundles (cas particulier)
 
-Pour le mode *mounted* (chap. 03), des stanzas dédiées entrent en jeu :
+Pour le mode *mounted* (chap. 03), la configuration est faite **côté peer** dans `distsearch.conf` (cf. [Mountedknowledgebundlereplication](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Mountedknowledgebundlereplication)) :
 
 ```ini
-# Cote SH
-[mounted_bundle_settings]
-mounted_root = /shared/splunk_bundles/
-
-# Cote peer (server.conf)
-[searchhead:00000000-0000-0000-0000-000000000001]
-mounted_root = /shared/splunk_bundles/
+# Cote peer (distsearch.conf), une stanza par SH source
+[searchhead:<searchhead-splunk-server-name>]
+mounted_bundles = true
+bundles_location = /opt/shared_bundles/<searchhead-splunk-server-name>
 ```
 
-Ces stanzas seront décrites en détail au chap. 03 § 4 ; mention ici uniquement pour le cadrage.
+`<searchhead-splunk-server-name>` est le nom de serveur Splunk du SH source ; **dans un SHC, on utilise le GUID du cluster** (pas le server name d'un membre individuel — la doc Splunk est explicite sur ce point). Côté SH, aucune stanza dédiée n'est requise pour activer le mounted bundle : le SH écrit toujours le bundle à sa place habituelle, et c'est le peer qui décide de le lire via la stanza ci-dessus plutôt que de l'attendre par push. Détails et compromis au chap. 03 § 3.
 
 ## 7. Outils d'investigation côté SH
 
@@ -242,6 +239,8 @@ Détails complets et autres SPL dans le chap. 06 § 4.
 - [Splunk DistSearch 9.4 — What search heads send](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Whatsearchheadssend)
 - [Splunk DistSearch 9.4 — Classic knowledge bundle replication](https://docs.splunk.com/Documentation/Splunk/9.4.1/DistSearch/Classicknowledgebundlereplication)
 - [Splunk DistSearch 9.4 — Limit the knowledge bundle size](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Limittheknowledgebundlesize)
+- [Splunk DistSearch 9.4 — Modify the knowledge bundle (maxBundleSize / max_content_length)](https://docs.splunk.com/Documentation/Splunk/9.4.1/DistSearch/Limittheknowledgebundlesize)
+- [Splunk DistSearch 9.4 — Mounted knowledge bundle replication](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Mountedknowledgebundlereplication)
 - [Splunk DistSearch 9.4 — Configure distributed search](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Configuredistributedsearch)
 - [Splunk DistSearch 9.4 — Troubleshoot knowledge bundle replication](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Troubleshootknowledgebundlereplication)
 - [Splunk Admin 9.4 — distsearch.conf spec](https://docs.splunk.com/Documentation/Splunk/9.4.0/Admin/Distsearchconf)

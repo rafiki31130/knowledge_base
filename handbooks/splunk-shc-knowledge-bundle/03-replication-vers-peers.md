@@ -91,17 +91,18 @@ En mode mounted, le bundle ne transite plus par le réseau Splunk : le SH l'écr
 
 ### Stanzas de configuration
 
-```ini
-# Sur le SH : distsearch.conf
-[mounted_bundle_settings]
-mounted_root = /shared/splunk_bundles/
+La configuration est portée **côté peer**, dans `$SPLUNK_HOME/etc/system/local/distsearch.conf` (cf. [Mountedknowledgebundlereplication](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Mountedknowledgebundlereplication)) : une stanza `[searchhead:<searchhead-splunk-server-name>]` par SH source, avec les attributs `mounted_bundles=true` et `bundles_location=<path>` où `<path>` est le **mountpoint côté search peer** (pas côté SH).
 
-# Sur chaque peer : server.conf
+```ini
+# Sur chaque peer : distsearch.conf, une stanza par SH source
 [searchhead:00000000-0000-0000-0000-000000000001]
-mounted_root = /shared/splunk_bundles/
+mounted_bundles = true
+bundles_location = /opt/shared_bundles/00000000-0000-0000-0000-000000000001
 ```
 
-Les stanzas `[searchhead:<guid>]` côté peer doivent exister pour chaque SH source — soit `shcMember01..03` en SHC à 3 membres. La configuration cible donc trois stanzas côté peer dans un SHC à 3.
+**Cas SHC** : la doc Splunk précise que si le search peer est connecté à un SHC, le nom dans la stanza `[searchhead:<name>]` doit être **le GUID du cluster**, pas le server name d'un membre individuel. Une seule stanza couvre alors l'ensemble du SHC, pas une par membre. Côté SH, aucune stanza dédiée n'est requise : le SH continue d'écrire son bundle normalement, et c'est le peer qui choisit de le lire depuis le partage plutôt que de l'attendre par push grâce à la stanza ci-dessus.
+
+**Permissions** : les peers doivent avoir un accès **lecture seule** aux sous-répertoires du bundle pour éviter les conflits de verrou de fichier.
 
 ### Quand c'est la bonne réponse
 
@@ -117,11 +118,11 @@ Le mounted déplace la résilience du bundle vers le stockage partagé : si le N
 
 ```mermaid
 flowchart LR
-    SH["shcMember01<br/>(distsearch.conf<br/>mounted_bundle_settings)"]
+    SH["shcMember01<br/>(ecrit son bundle<br/>a sa place habituelle)"]
     NFS[("Shared storage<br/>NFS / SMB")]
-    P1["peer01<br/>(server.conf<br/>searchhead:guid01)"]
-    P2["peer02<br/>(server.conf<br/>searchhead:guid01)"]
-    P3["peer03<br/>(server.conf<br/>searchhead:guid01)"]
+    P1["peer01<br/>(distsearch.conf<br/>[searchhead:shc_guid]<br/>mounted_bundles=true<br/>bundles_location=...)"]
+    P2["peer02<br/>(distsearch.conf<br/>[searchhead:shc_guid]<br/>mounted_bundles=true<br/>bundles_location=...)"]
+    P3["peer03<br/>(distsearch.conf<br/>[searchhead:shc_guid]<br/>mounted_bundles=true<br/>bundles_location=...)"]
 
     SH -->|"ecriture<br/>(bundle complet)"| NFS
     NFS -->|"lecture"| P1
@@ -129,7 +130,7 @@ flowchart LR
     NFS -->|"lecture"| P3
 ```
 
-Le SH n'envoie plus le bundle par push : il écrit une fois sur le stockage partagé. Les peers lisent depuis ce stockage à la demande. Trade-off : la résilience du bundle dépend désormais de la résilience du NFS ; un lag d'écriture côté NFS, un cache local péri-mé sur un peer, ou un fail-over de partage sont autant de causes de désynchronisation invisibles au push direct.
+Le SH n'envoie plus le bundle par push : il écrit une fois sur le stockage partagé. La configuration est portée **côté peer** uniquement, via une stanza `[searchhead:<name>]` (avec `<name>` = GUID du SHC quand le SH source est un cluster) qui active `mounted_bundles=true` et pointe `bundles_location` vers le mountpoint côté peer. Les peers lisent depuis ce stockage à la demande. Trade-off : la résilience du bundle dépend désormais de la résilience du NFS ; un lag d'écriture côté NFS, un cache local périmé sur un peer, ou un fail-over de partage sont autant de causes de désynchronisation invisibles au push direct.
 
 ## 4. Sur disque côté peer : `var/run/searchpeers/`
 
