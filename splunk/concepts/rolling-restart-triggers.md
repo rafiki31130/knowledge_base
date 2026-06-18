@@ -193,9 +193,9 @@ qu'il peut et n'advertit au manager que les confs non-rechargeables.
 | `inputs.conf` — récepteur `[splunktcp]` (listener) | **RESTART** | ⚠️ **contraste SHC** : un peer **est** récepteur, le listener est réellement bindé |
 | `inputs.conf` — `[splunktcp-ssl]` / `requireClientCert` (activation **et** désactivation) | **RESTART** | les deux sens du toggle SSL récepteur |
 | `inputs.conf` — entrée **scriptée** (`[script://]`) | RELOAD | |
-| `outputs.conf` (forward aval) | **RESTART** | ⚠️ ne RELOAD **pas** côté peer |
+| `outputs.conf` (forward aval) | **RELOAD** | rechargé à chaud (endpoint `_reload` actif en 9.4.x). *(Verdict de 1er passage « RESTART » **corrigé** par validation secondaire : c'était un artefact d'échantillonnage de PID, pas un vrai restart.)* |
 | App **installée / activée / désactivée** via bundle | RELOAD | si le contenu est reloadable ; dépend du contenu, pas de l'acte |
-| App **désinstallée** (retirée du bundle manager) | **PURGE + RELOAD** | ⚠️ **opposé du SHC** : le bundle manager est **autoritatif** → retirer une app du bundle la **purge** des peers (sans restart si le reste est reloadable) |
+| App **désinstallée** (retirée du bundle manager) | **RESTART + PURGE** | le manager est **autoritatif** → l'app est **purgée** des peers **et** son retrait force un **restart** (`Restart required … One or more apps has been deleted`). *(Verdict de 1er passage « RELOAD+PURGE » **corrigé** par validation secondaire — l'app n'était pas garantie active au 1er test.)* |
 | Conf déclarant un reload endpoint custom (`app.conf [triggers] reload.<conf>`) | RELOAD | rend une conf normalement restart-required rechargeable |
 | Conf locale d'un peer (`etc/system/local`, hors bundle) | NO-OP cluster + RESTART-REQUIRED **local** | non répliqué ; restart manuel du seul peer édité |
 | Re-push d'un bundle identique (sans diff) | NO-OP | `No new bundle will be pushed` |
@@ -235,9 +235,10 @@ redondance pour drainer).
   dans l'absolu.
 - **Désinstallation d'app = destructive (ne pas la croire inoffensive).** Retirer
   du bundle une app **installée par le deployer (SHC)** ou par le **manager
-  (cluster d'indexers)** la **supprime des nœuds**. Côté **SHC** c'est en outre
-  **restart-required** (confirmé en production). Ne jamais présumer qu'enlever une
-  app du bundle est sans effet : c'est un changement **destructif** propagé.
+  (cluster d'indexers)** la **supprime des nœuds** **et** force un **restart** —
+  confirmé sur les **deux** topologies (SHC en production, indexer cluster en
+  validation secondaire). Ne jamais présumer qu'enlever une app du bundle est sans
+  effet : c'est un changement **destructif + restart** propagé.
 - **Suppression d'index = restart MAIS buckets non purgés.** Retirer un index du
   bundle indexer déclenche un restart, mais les **buckets restent sur disque** :
   la purge des données est une opération distincte.
