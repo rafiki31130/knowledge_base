@@ -5,7 +5,7 @@
 ## Quick refresher
 
 - Every distributed search includes a **fan-out** to the peers, a **map** on each peer, a **reduce** on the SH.
-- Before fan-out, the SH checks that every peer has the bundle at the current hash. If not, it either waits, pushes, or (depending on `allowSkipReplication`) skips.
+- Before fan-out, the SH checks that every peer has the bundle at the current hash. If not, it pushes (classic) or waits (cascading); on failure/timeout, replication being asynchronous, the peer keeps serving with its **previous bundle** rather than being excluded from the search.
 - A scheduled search runs on the captain member if it is a clustered saved-search of the scheduler. If the captain changes during execution, the search may be relaunched by the new captain.
 - The SH aggregates results as they arrive (`stats`, `timechart` on the reduce side). A reduce slowness on the SH is not a bundle slowness.
 
@@ -17,7 +17,7 @@ Three possible outcomes per peer:
 
 - **Match.** The hash on the peer matches the hash on the SH. The peer is ready; the SH continues.
 - **Miss with push possible.** The hash differs but the SH can push the bundle (classic / cascading mode) or write to the shared storage (mounted mode). The SH triggers propagation and waits for the peer to acknowledge the new hash.
-- **Miss with no push possible / timeout.** The peer does not respond, or propagation fails, or the `connectionTimeout` / `sendRcvTimeout` is exceeded. Behavior switches based on `allowSkipReplication`: `false` → the search fails or waits; `true` → the peer is silently skipped and the search continues with the others.
+- **Miss with no push possible / timeout.** The peer does not respond, or propagation fails, or the `connectionTimeout` (default 60 s) / `sendRcvTimeout` (default 60 s) is exceeded. The Splunk 9.4 documentation is explicit: *"A search will not be prevented from running just because knowledge replication has not finished. Bundle replication happens asynchronously from search."* The peer therefore keeps serving the search with its **previously received bundle** (recent SH changes are simply not yet effective on that peer). The failed replication cycle is traced in `splunkd.log` (`WARN DistributedBundleReplicationManager - bundle replication to N peer(s) took too long`) but the search UI does not issue a user-facing warning.
 
 This is the critical step for diagnosis. A search blocked at this step is a search that has **not started** querying the data; the UI symptom is "waiting for bundle replication" or a frozen loader with no progress on the event counter.
 
@@ -60,7 +60,7 @@ sequenceDiagram
     P1-->>SH: hash match
     P2-->>SH: hash miss
     P3-->>SH: hash match
-    Note over SH,P2: if miss: push bundle (classic)<br/>or wait for cascade<br/>or skip (allowSkipReplication=true)
+    Note over SH,P2: if miss: push bundle (classic)<br/>or wait for cascade<br/>or timeout -> peer serves with its previous bundle
     SH->>P2: push bundle
     P2-->>SH: ack new hash
     SH->>P1: fan-out search
@@ -77,13 +77,12 @@ Before any fan-out, the SH checks that each peer has the right hash. A search bl
 
 ## 6. Special case: "bundle not yet propagated"
 
-When the SH observes at search time that the bundle is not yet up to date on a peer (for example a lookup has just been modified by a deployer apply that has not yet reached the peer via the search knowledge bundle), three behaviors coexist:
+When the SH observes at search time that the bundle is not yet up to date on a peer (for example a lookup has just been modified by a deployer apply that has not yet reached the peer via the search knowledge bundle), two trajectories coexist — both **non-blocking for the search**:
 
-- **`allowSkipReplication=false` (default)** + bundle being pushed: the SH waits. The search shows "waiting for bundle replication" and starts as soon as the peer acknowledges. This is the safe but blocking behavior.
-- **`allowSkipReplication=false` + push impossible** (peer down, network cut): the SH gives up after timeout (`connectionTimeout`). The search fails with a "failed to replicate bundle to peer X" message.
-- **`allowSkipReplication=true`**: the peer is silently skipped, the search starts on the others. No explicit warning to the user, just a missing peer in the scope. Search with partial results.
+- **Push in progress, short**: the SH may transiently show "waiting for bundle replication" while the peer acknowledges, then the search starts with the new bundle.
+- **Push that fails or times out (timeouts `connectionTimeout` / `sendRcvTimeout`, defaults 60 s)**: the replication cycle is marked in error on the SH side (`WARN DistributedBundleReplicationManager`) but the search starts anyway — the peer answers with its **previously received bundle**. Recent SH knowledge changes are not reflected in the results coming from that peer until the next successful replication cycle.
 
-The landmark for the admin: open `splunkd.log` on the SH side at the time of the blocked search, grep on `DistributedBundleReplicationManager`; a line in `log_level=WARN` with a peer name indicates case 2 or 3, an `INFO` line with `bundle replicating` indicates case 1.
+The landmark for the admin: open `splunkd.log` on the SH side at search time, grep on `DistributedBundleReplicationManager`; a `WARN` line with a peer name indicates a failed push cycle (the peer is serving with its previous bundle, silent inconsistency risk to monitor).
 
 ## 7. Special case: scheduled search and loss of captain
 
@@ -98,14 +97,13 @@ This case is not a bundle problem in the strict sense but a case of SHC service 
 ## Typical pitfalls
 
 - **Search that "starts fast" but the reduce on SH is overloaded.** The SH shows partial results that no longer progress. Symptom: map complete on the peer side (verifiable via REST on each peer), reduce not progressing. Causes: massive non-streaming SPL (`| sort - _time` on millions of events), `stats` on too many groups, lookup on the SH side after the distributed phase. Solution: move what can be moved into the distributed phase (use `tstats` when possible, filter before `stats`, limit with `head` on the distributed side).
-- **Silently skipped peer.** With `allowSkipReplication=true`, the search starts without the peer in error. Results are partial, the UI does not distinguish. An alerting dashboard may produce a false negative. Dedicated monitoring to add (alert on `splunkd.log` `DistributedBundleReplicationManager` `log_level=WARN/ERROR` when `allowSkipReplication=true` is active).
+- **Peer serving with a stale bundle.** Replication being asynchronous (Splunk 9.4 docs), a peer whose last push cycle failed keeps responding to searches with its previous bundle. The UI does not distinguish — an alerting dashboard that depends on a recently modified lookup or macro can produce an inconsistent result until the next successful replication cycle. Dedicated monitoring to add (alert on `splunkd.log` `DistributedBundleReplicationManager` `log_level=WARN/ERROR`).
 - **Captain lost during a scheduled search.** The user sees a saved search that has not produced or that has produced twice for the same slot. Cause: election in the middle. To distinguish from a bundle failure: `splunkd.log` `SHCScheduler*` shows the decision on the new captain. No reactive remedy, prevention through infra stability.
 - **Confusing bundle wait and slow-map wait.** A search blocked on a peer can be at step 3 (bundle push in progress) or at step 4 (map in progress, just slow). Distinction: `splunkd.log` on the peer side. If you see recent `SearchOperator*` or similar entries (on the peer), it is map; if you see nothing and `var/run/searchpeers/` does not have the expected bundle, it is still at the bundle stage.
 
 ## When to escalate / when to decide
 
 - **Distributed search durably slower than expected.** Before blaming the bundle or the network, measure the verification/fan-out/map/reduce breakdown with the Splunk job inspector (`Job → Inspect job`). If verification + fan-out > 10% of total time, examine bundle health (ch. 05). Otherwise, look at map (peers) or reduce (SH).
-- **`allowSkipReplication` decision.** To document at the app or saved-search-context level. Do not enable `true` globally for convenience — the absence of a warning is a real risk for alerting and compliance. If enabled, add a monitoring saved search that detects the skips.
 - **Unstable captain.** If the captain changes more than once per day in the absence of an infra incident, it is a structural SHC problem (internal network, resources). Do not try to stabilize through timeout adjustments — investigate the cause.
 
 ## Sources
@@ -113,4 +111,5 @@ This case is not a bundle problem in the strict sense but a case of SHC service 
 - [Splunk DistSearch 9.4 — Knowledge bundle replication](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Knowledgebundlereplication)
 - [Splunk DistSearch 9.4 — Troubleshoot knowledge bundle replication](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Troubleshootknowledgebundlereplication)
 - [Splunk DistSearch 9.4 — SHC architecture (captain election, clustered scheduler)](https://docs.splunk.com/Documentation/Splunk/9.4.2/DistSearch/SHCarchitecture)
-- [Splunk Admin 9.4 — distsearch.conf (`[replicationSettings] allowSkipReplication`)](https://docs.splunk.com/Documentation/Splunk/9.4.0/Admin/Distsearchconf)
+- [Splunk Admin 9.4 — distsearch.conf (`[replicationSettings]`: `connectionTimeout`, `sendRcvTimeout`)](https://docs.splunk.com/Documentation/Splunk/9.4.2/Admin/Distsearchconf)
+- [Splunk DistSearch 9.4 — Classic knowledge bundle replication (asynchronous replication)](https://docs.splunk.com/Documentation/Splunk/9.4.1/DistSearch/Classicknowledgebundlereplication)

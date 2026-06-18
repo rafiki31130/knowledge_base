@@ -1,6 +1,6 @@
 # Chapter 3 — Replication to search peers
 
-> The knowledge bundle built on the search head side must then reach every search peer. Three replication modes coexist in Splunk 9.4 — *classic* (default), *cascading* (recommended at scale) and *mounted* (shared storage). This chapter describes them in that order, gives the switching criterion, details the layout on the peer side (`var/run/searchpeers/`), addresses partial failures (peer down, divergent hash, NFS that drops), and concludes on the behavior options (`allowSkipReplication`).
+> The knowledge bundle built on the search head side must then reach every search peer. Three replication modes coexist in Splunk 9.4 — *classic* (default), *cascading* (recommended at scale) and *mounted* (shared storage). This chapter describes them in that order, gives the switching criterion, details the layout on the peer side (`var/run/searchpeers/`), and addresses partial failures (peer down, divergent hash, NFS that drops) along with the actual asynchronous behavior of replication when timeouts (`connectionTimeout`, `sendRcvTimeout`) expire.
 
 ## Quick refresher
 
@@ -8,7 +8,7 @@
 - In **cascading** replication, Splunk recommends the switch starting around 15-20 peers; a relay peer re-distributes to a following subset and the SH pushes only once.
 - In **mounted** replication, the bundle lives on shared storage (NFS / SMB); peers read it instead of receiving it by push.
 - On the peer side, received bundles live under `$SPLUNK_HOME/var/run/searchpeers/<sh_guid>-<epoch>-<hash>.bundle`. Splunk keeps a few recent ones and cleans up the older ones.
-- A replication failure to a particular peer does not block the rest by default (see `allowSkipReplication=false` which *blocks* the search until all peers are up to date, vs. `allowSkipReplication=true` which lets it continue in best-effort).
+- A replication failure to a particular peer does not block the search: the official Splunk documentation specifies that *"A search will not be prevented from running just because knowledge replication has not finished. Bundle replication happens asynchronously from search."* The peer keeps serving with its **previous bundle**; recent SH knowledge changes are simply not yet effective on that peer (risk of stale artifacts in results).
 
 ## 1. Classic replication (default mode)
 
@@ -152,19 +152,14 @@ Rotation is managed by Splunk based on the arrival of new bundles; a newly recei
 
 ## 5. Partial failures
 
-A down peer does not block replication to the others: each push is independent. The behavior of a search facing a non-replicated peer depends on `allowSkipReplication`:
+A down peer does not block replication to the others: each push is independent. On the search side, the behavior is **asynchronous by construction** (Splunk 9.4 docs): a distributed search runs on the peer even when the last replication cycle failed — the peer responds with its **previously received bundle** (potentially stale).
 
-- **`allowSkipReplication=false` (default)**. The search waits until all peers have the bundle (or gives up after timeout). Consequence: a durably late peer blocks all distributed searches on the SH. This is maximum safety (completeness) but it is also the number-one source of "search stuck waiting for bundle" symptom (ch. 05 branch H).
-- **`allowSkipReplication=true`**. The search starts on the up-to-date peers and **ignores** the late peer. Partial results with no explicit warning. Acceptable only in contexts where completeness is not critical; risky for alerting and compliance.
+The timeouts that bound a push are defined in `distsearch.conf [replicationSettings]` on the SH side:
 
-The right choice depends on the use case:
+- `connectionTimeout` (default **60 s**): maximum wait time before the SH's initial connection to a peer times out.
+- `sendRcvTimeout` (default **60 s**): maximum wait time while the SH is sending a full replication to a peer.
 
-| Case | Recommendation |
-| --- | --- |
-| Alerting / SOC searches | `allowSkipReplication=false`. Better an alert that misses its slot than silent partial results. |
-| Preview monitoring dashboards | `allowSkipReplication=true` acceptable, with explicit mention in the dashboard documentation. |
-| Compliance / regular reporting | `allowSkipReplication=false`. Traceability is non-negotiable. |
-| Ad-hoc exploratory searches | Case by case — `allowSkipReplication=false` remains the safe default. |
+When these timeouts expire (peer down, congested network, slow link, large bundle), the push cycle fails for that peer and `splunkd.log` emits a `WARN DistributedBundleReplicationManager - bundle replication to N peer(s) took too long`. **Splunk does not "skip" the peer for the search**: it lets it answer with its previous bundle. The operational consequence (stale artifacts, outdated lookups, inconsistent results until the next successful push) must be monitored explicitly — Splunk does not issue a user-facing warning on the search UI.
 
 ### Symptoms of a partial failure
 

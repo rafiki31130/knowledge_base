@@ -124,7 +124,6 @@ replicationThreads = auto
 connectionTimeout = 60
 sendRcvTimeout = 60
 excludeReplicatedLookupSize = 100
-allowSkipReplication = false
 ```
 
 | Parameter | Effect | When to adjust |
@@ -135,7 +134,6 @@ allowSkipReplication = false
 | `connectionTimeout` | Connection-opening timeout to a peer. | Raise if network is slow or peer overloaded — diagnose the cause before masking. |
 | `sendRcvTimeout` | Timeout of send/recv phases. | Raise for very large bundles over a slow link — but reduce-then-fix. |
 | `excludeReplicatedLookupSize` | Size (MB) above which a lookup is excluded from the bundle. `100` by default. | Adapt to the size of business lookups. |
-| `allowSkipReplication` | If `true`, the search can continue while skipping peers whose replication failed. Default `false`. | Enable **only** with a clear understanding of the trade-off (see ch. 04 §3). |
 
 > **On the indexer/peer side**: `max_content_length` (in `[httpServer]` of the peer's `server.conf`, in **bytes**) bounds the payload size the peer accepts to receive. It is the receive-side counterpart of `maxBundleSize`. The canonical lever for **bundle size** is `maxBundleSize` on the SH side; `max_content_length` on the peer side must be raised symmetrically when you raise `maxBundleSize`, otherwise the push fails with an explicit error on the peer side ("bundle exceeds max content length").
 
@@ -225,7 +223,7 @@ Full details and other SPL in ch. 06 §4.
 - **Mis-scoped `replicationBlacklist`.** Patterns too broad that exclude necessary content (for example all lookups of an app by mistake). Symptom: searches that work locally on the SH but return empty or in error when distributed. Test each blacklist with a dry-run apply and a witness distributed search before industrialization.
 - **`shareBundles=false` on an SHC member.** Disables knowledge bundle push from this member. Unless explicit (SH dedicated to a local task, which is unusual in an SHC), it is a configuration that makes the member's searches not properly access the peers — manifestation: the member's searches empty or truncated while other members work. Verify in `distsearch.conf` that `shareBundles=true` is the effective state on every member.
 - **Raising `maxBundleSize` (on the SH side) or `max_content_length` (on the peer side) instead of reducing the bundle.** Classic temptation in the face of a "bundle exceeds max content length" or "bundle exceeds maxBundleSize" error: bump the limit on the SH (`maxBundleSize` in MB) and on the peer (`max_content_length` in bytes). False win: the bundle clogs the link, replication takes longer, searches wait. Always start by reducing (blacklist/denylist, externalize lookups). If the bump is unavoidable, **both parameters must be raised symmetrically** — raising only one of the two sides produces a silent reception error that is hard to diagnose.
-- **`allowSkipReplication=true` enabled without understanding the trade-off.** The option puts the search in best-effort mode: a peer whose bundle has not been replicated is silently skipped. Consequence: partial results without an explicit warning. Acceptable only in contexts where completeness is not critical (preview dashboards) and never for alerting.
+- **Misunderstood `connectionTimeout` / `sendRcvTimeout` timeouts.** These two parameters bound the time a knowledge bundle push to a peer is allowed to take (connection open + transfer). When a push fails or times out, the official Splunk documentation is explicit: *"A search will not be prevented from running just because knowledge replication has not finished. Bundle replication happens asynchronously from search."* The peer keeps serving with its **previous bundle**; it is neither excluded nor quarantined by the replication mechanism. Operational consequence: if a peer accumulates successive push failures, it serves searches with inconsistent knowledge (stale app artifacts, outdated lookups) without any explicit warning to the user. Monitoring is done through `splunkd.log` component `DistributedBundleReplicationManager` (see ch. 04 §4 and ch. 06).
 
 ## When to escalate / when to decide
 

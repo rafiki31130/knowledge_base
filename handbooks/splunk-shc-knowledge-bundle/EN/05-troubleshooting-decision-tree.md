@@ -65,7 +65,7 @@ flowchart TB
 
     H --> H1[H1. peer slow to ack]
     H --> H2[H2. push in progress]
-    H --> H3[H3. allowSkipReplication false]
+    H --> H3[H3. peer down + repeated timeout]
 
     I --> I0[See Splunk Configurationbundleissues]
 ```
@@ -272,12 +272,12 @@ Generic symptom: search submitted, UI shows "waiting for bundle replication". No
 - **Action.** Reduce the bundle (see branch C) or raise network throughput, or switch to mounted.
 - **Escalation.** None.
 
-### H3 — `allowSkipReplication=false` + down peer
+### H3 — Down peer + push cycles timing out (`connectionTimeout` / `sendRcvTimeout`)
 
-- **Symptom.** A peer is durably down. `allowSkipReplication=false`. All distributed searches wait indefinitely.
-- **Ordered hypotheses.** (1) Crashed peer. (2) Peer quarantined by the CM but still present in `serverList` on the SH side. (3) Recent network filtering.
-- **Investigation.** `splunk show distributed-peers` (state). `splunk show cluster-manager-peers` on the CM side.
-- **Action.** Bring the peer back, or remove it from `serverList`, or — temporary and debatable solution — flip `allowSkipReplication=true` while you wait.
+- **Symptom.** A peer is durably down or unreachable. `splunkd.log` on the SH side accumulates `WARN DistributedBundleReplicationManager - bundle replication to N peer(s) took too long`. Because replication is asynchronous (Splunk 9.4 docs), **searches are not blocked**: the peer keeps being queried but responds with its previously received bundle (potentially stale knowledge). If the peer is fully unreachable at the TCP level, it ends up in `status=down` per `/services/search/distributed/peers` and searches run without it (effective partial results, distinct from a merely stale bundle).
+- **Ordered hypotheses.** (1) Crashed or stopped peer. (2) Peer quarantined by the CM but still present in `serverList` on the SH side. (3) Recent network filtering (pfSense ACL, host firewall). (4) Transient saturation causing `sendRcvTimeout` to expire on large bundles.
+- **Investigation.** `splunk show distributed-peers` (state). `splunk show cluster-manager-peers` on the CM side. `index=_internal sourcetype=splunkd component=DistributedBundleReplicationManager` over the relevant window to identify the offending peer and the failure type (connection vs. send/recv timeout).
+- **Action.** Bring the peer back or remove it from `serverList`. If the cause is a `sendRcvTimeout` on a large bundle + slow link, raising `sendRcvTimeout` is a palliative — the real cure remains reducing the bundle (ch. 03 §1, denylist) or switching to cascading/mounted.
 - **Escalation.** If the peer crashes at startup: Splunk Support case with the peer's `splunk diag`.
 
 ## 11. Branch I — Indexer cluster bundle (out-of-main-scope reminder)
