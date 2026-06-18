@@ -26,3 +26,4 @@ de configuration spécifique à un environnement.
 - [Rebalance multisite](./rebalance-multisite.md)
 - [ITSI + Federated Search](./itsi-federated-search.md)
 - [Patrons de CI/CD pour déploiement Splunk](./cicd-deployment-patterns.md)
+- [Déclencheurs de rolling restart : SHC & cluster d'indexers](./rolling-restart-triggers.md)

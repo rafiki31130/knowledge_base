@@ -130,7 +130,14 @@ tail -f $SPLUNK_HOME/var/log/splunk/splunkd.log
   les forwarders parlent au port de gestion (`example.com:8089`), pas à l'interface web.
 - **Restart nécessaire ou pas** : certaines configs (inputs, props) sont rechargées à
   chaud via l'endpoint de reload ; d'autres exigent un `splunk restart`. Vérifier la doc
-  de la stanza concernée avant de redémarrer en prod.
+  de la stanza concernée avant de redémarrer en prod. En cluster, ce n'est **pas l'acte
+  de pousser un bundle** qui déclenche un restart mais le **contenu** : seules les confs
+  « ne supportant pas le reload » forcent un rolling restart (SHC : flag
+  `advertiseRestartRequired` côté membre ; IDXC : reloader de conf côté peer). Une même
+  conf peut RELOAD sur un SHC et RESTART sur un cluster d'indexers. Table de vérité par
+  conf, méthode pour la déterminer soi-même, et pièges (purge d'app, suppression d'index,
+  searchable rolling restart) : [Déclencheurs de rolling restart — SHC & cluster
+  d'indexers](../splunk/concepts/rolling-restart-triggers.md).
 
 ## Voir aussi
 
