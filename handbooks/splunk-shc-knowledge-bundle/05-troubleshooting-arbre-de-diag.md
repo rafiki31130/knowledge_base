@@ -65,7 +65,7 @@ flowchart TB
 
     H --> H1[H1. peer lent ack]
     H --> H2[H2. push en cours]
-    H --> H3[H3. allowSkipReplication false]
+    H --> H3[H3. peer KO + timeout repete]
 
     I --> I0[Voir Splunk Configurationbundleissues]
 ```
@@ -272,12 +272,12 @@ Symptôme générique : recherche soumise, UI affiche « waiting for bundle repl
 - **Action.** Réduire le bundle (cf. branche C) ou augmenter le débit réseau, ou basculer en mounted.
 - **Escalade.** Aucune.
 
-### H3 — `allowSkipReplication=false` + peer KO
+### H3 — Peer KO + cycles de push qui expirent (timeout `connectionTimeout` / `sendRcvTimeout`)
 
-- **Symptôme.** Un peer est durablement KO. `allowSkipReplication=false`. Toutes les recherches distribuées attendent indéfiniment.
-- **Hypothèses ordonnées.** (1) Peer crashé. (2) Peer quarantined par le CM mais encore présent dans `serverList` côté SH. (3) Filtrage réseau récent.
-- **Investigation.** `splunk show distributed-peers` (état). `splunk show cluster-manager-peers` côté CM.
-- **Action.** Ramener le peer, ou le sortir du `serverList`, ou — solution temporaire et discutable — basculer `allowSkipReplication=true` en attendant.
+- **Symptôme.** Un peer est durablement KO ou injoignable. `splunkd.log` côté SH accumule des `WARN DistributedBundleReplicationManager - bundle replication to N peer(s) took too long`. La réplication étant asynchrone (doc Splunk 9.4), **les recherches ne sont pas bloquées** : le peer reste interrogé mais répond avec son bundle précédemment reçu (knowledge potentiellement obsolète). Si le peer est complètement injoignable au niveau TCP, il finit en `status=down` côté `/services/search/distributed/peers` et les recherches s'exécutent sans lui (résultats partiels effectifs, distincts d'un simple bundle obsolète).
+- **Hypothèses ordonnées.** (1) Peer crashé ou arrêté. (2) Peer quarantined par le CM mais encore présent dans `serverList` côté SH. (3) Filtrage réseau récent (ACL pfSense, firewall hôte). (4) Saturation transitoire qui fait expirer `sendRcvTimeout` sur des bundles volumineux.
+- **Investigation.** `splunk show distributed-peers` (état). `splunk show cluster-manager-peers` côté CM. `index=_internal sourcetype=splunkd component=DistributedBundleReplicationManager` sur la fenêtre concernée pour identifier le peer en cause et la nature de l'échec (timeout connexion vs. timeout send/recv).
+- **Action.** Ramener le peer ou le sortir du `serverList`. Si la cause est un `sendRcvTimeout` sur bundle volumineux + lien lent, augmenter `sendRcvTimeout` est un palliatif — la vraie cure reste la réduction du bundle (chap. 03 § 1, denylist) ou la bascule en cascading/mounted.
 - **Escalade.** Si le peer crashe au démarrage : demande Splunk Support avec `splunk diag` du peer.
 
 ## 11. Branche I — Indexer cluster bundle (rappel hors scope principal)

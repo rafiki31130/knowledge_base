@@ -124,7 +124,6 @@ replicationThreads = auto
 connectionTimeout = 60
 sendRcvTimeout = 60
 excludeReplicatedLookupSize = 100
-allowSkipReplication = false
 ```
 
 | Paramètre | Effet | Quand l'ajuster |
@@ -135,7 +134,6 @@ allowSkipReplication = false
 | `connectionTimeout` | Timeout d'ouverture de connexion vers un peer. | À monter si réseau lent ou peer surchargé — diagnostiquer la cause avant de masquer. |
 | `sendRcvTimeout` | Timeout des phases send/recv. | À monter pour des bundles très gros sur lien lent — mais reduce-then-fix. |
 | `excludeReplicatedLookupSize` | Taille (Mo) au-delà de laquelle une lookup est exclue du bundle. `100` par défaut. | À adapter en fonction de la taille des lookups métier. |
-| `allowSkipReplication` | Si `true`, la recherche peut continuer en sautant les peers dont la réplication a échoué. Défaut `false`. | À activer **seulement** avec compréhension claire du compromis (cf. chap. 04 § 3). |
 
 > **Côté indexer/peer** : `max_content_length` (dans `[httpServer]` de `server.conf` du peer, en **bytes**) borne la taille du payload que le peer accepte de recevoir. C'est le pendant côté réception de `maxBundleSize`. Le levier canonique pour la **taille bundle** est `maxBundleSize` côté SH ; `max_content_length` côté peer doit être augmenté symétriquement quand on monte `maxBundleSize`, sinon le push échoue avec une erreur explicite côté peer (« bundle exceeds max content length »).
 
@@ -225,7 +223,7 @@ Détails complets et autres SPL dans le chap. 06 § 4.
 - **`replicationBlacklist` mal scopée.** Patterns trop larges qui excluent du contenu nécessaire (par exemple toutes les lookups d'une app par mégarde). Symptôme : recherches qui fonctionnent en local sur le SH mais retournent vides ou en erreur quand distribuées. Tester chaque blacklist avec un apply à blanc et une recherche distribuée témoin avant industrialisation.
 - **`shareBundles=false` sur un membre SHC.** Désactive le push knowledge bundle depuis ce membre. Sauf cas explicite (SH dédié à une tâche locale, ce qui est inhabituel dans un SHC), c'est une configuration qui fait que les recherches du membre n'ont pas accès aux peers correctement — manifestation : recherches du membre vides ou tronquées alors que les autres membres fonctionnent. Vérifier dans `distsearch.conf` que `shareBundles=true` est l'état effectif sur tous les membres.
 - **Augmenter `maxBundleSize` (côté SH) ou `max_content_length` (côté peer) au lieu de réduire le bundle.** Tentation classique face à une erreur « bundle exceeds max content length » ou « bundle exceeds maxBundleSize » : passer la limite côté SH (`maxBundleSize` en MB) et côté peer (`max_content_length` en bytes). Faux gain : le bundle s'engorge sur le lien, la réplication prend plus longtemps, les recherches attendent. Toujours commencer par réduire (blacklist/denylist, externaliser les lookups). Si la montée est inévitable, **les deux paramètres doivent être augmentés symétriquement** — relever seulement l'un des deux côtés produit une erreur de réception silencieuse difficile à diagnostiquer.
-- **`allowSkipReplication=true` activé sans comprendre le compromis.** L'option fait passer la recherche en mode best-effort : un peer dont le bundle n'a pas été répliqué est sauté silencieusement. Conséquence : résultats partiels sans avertissement explicite. Acceptable seulement dans des contextes où la complétude n'est pas critique (dashboards d'aperçu) et jamais en alerting.
+- **Timeouts `connectionTimeout` / `sendRcvTimeout` mal compris.** Ces deux paramètres bornent le temps qu'un push knowledge bundle vers un peer peut prendre (ouverture de connexion + transfert). Quand un push échoue ou expire, la doc Splunk officielle est explicite : *« A search will not be prevented from running just because knowledge replication has not finished. Bundle replication happens asynchronously from search »*. Le peer continue à servir avec son **bundle précédent** ; il n'est ni exclu ni mis en quarantaine par le mécanisme de réplication. Conséquence opérationnelle : si un peer accumule des échecs de push successifs, il sert des recherches avec un knowledge incohérent (artefacts d'app obsolètes, lookups périmées) sans avertissement explicite à l'utilisateur. La surveillance se fait via `splunkd.log` composant `DistributedBundleReplicationManager` (cf. chap. 04 § 4 et chap. 06).
 
 ## Quand escalader / quand décider
 

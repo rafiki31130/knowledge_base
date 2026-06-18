@@ -182,7 +182,7 @@ index=_internal sourcetype=splunkd_access uri_path="*shcluster*bundle*" earliest
 - Toujours `splunk apply shcluster-bundle -action stage` **avant** l'apply complet, pour valider le packaging.
 - Toujours `splunk list shcluster-bundle-status` côté captain **après** un apply, avant de considérer la propagation comme effective.
 - Toujours `grep ERROR $SPLUNK_HOME/var/log/splunk/splunkd.log` côté nœud suspect avant d'ouvrir un demande Splunk Support — souvent la cause est là.
-- En cas d'urgence avec `allowSkipReplication=true` activé pour débloquer : documenter le créneau (date, raison) et planifier le retour à `false` dès l'incident clos.
+- Si un peer accumule des `WARN DistributedBundleReplicationManager - bundle replication ... took too long` : la réplication est asynchrone (le peer sert avec son bundle précédent, recherches non bloquées) mais le knowledge poussé récemment n'est pas reflété — traiter la cause (peer KO, lien lent, bundle volumineux) plutôt que de masquer l'avertissement.
 
 ## Sources
 

@@ -1,6 +1,6 @@
 # Chapitre 3 — Réplication vers les search peers
 
-> Le knowledge bundle constitué côté search head doit ensuite atteindre chaque search peer. Trois modes de réplication coexistent en Splunk 9.4 — *classic* (par défaut), *cascading* (recommandé à l'échelle) et *mounted* (stockage partagé). Ce chapitre les décrit dans cet ordre, donne le critère de bascule, détaille l'arborescence côté peer (`var/run/searchpeers/`), traite les échecs partiels (peer KO, hash divergent, NFS qui décroche), et conclut sur les options de comportement (`allowSkipReplication`).
+> Le knowledge bundle constitué côté search head doit ensuite atteindre chaque search peer. Trois modes de réplication coexistent en Splunk 9.4 — *classic* (par défaut), *cascading* (recommandé à l'échelle) et *mounted* (stockage partagé). Ce chapitre les décrit dans cet ordre, donne le critère de bascule, détaille l'arborescence côté peer (`var/run/searchpeers/`), et traite les échecs partiels (peer KO, hash divergent, NFS qui décroche) avec le comportement asynchrone réel de la réplication face aux timeouts (`connectionTimeout`, `sendRcvTimeout`).
 
 ## Rappels rapides
 
@@ -8,7 +8,7 @@
 - En réplication **cascading**, Splunk recommande la bascule à partir d'environ 15-20 peers ; un peer relais re-distribue à un sous-ensemble suivant et le SH ne pousse qu'une fois.
 - En réplication **mounted**, le bundle vit sur un stockage partagé (NFS / SMB) ; les peers le lisent au lieu de le recevoir par push.
 - Côté peer, les bundles reçus vivent sous `$SPLUNK_HOME/var/run/searchpeers/<sh_guid>-<epoch>-<hash>.bundle`. Splunk en conserve quelques-uns récents et fait le ménage des plus anciens.
-- Un échec de réplication vers un peer particulier ne bloque pas l'ensemble par défaut (cf. `allowSkipReplication=false` qui *bloque* la recherche jusqu'à ce que tous les peers soient à jour, vs. `allowSkipReplication=true` qui laisse continuer en best-effort).
+- Un échec de réplication vers un peer particulier ne bloque pas la recherche : la doc Splunk officielle précise que *« A search will not be prevented from running just because knowledge replication has not finished. Bundle replication happens asynchronously from search »*. Le peer continue à servir avec son **bundle précédent** ; les changements de knowledge du SH ne sont simplement pas encore effectifs sur ce peer (risque d'artefacts obsolètes côté résultats).
 
 ## 1. Réplication classique (mode par défaut)
 
@@ -152,19 +152,14 @@ La rotation est gérée par Splunk en fonction de l'arrivée des nouveaux bundle
 
 ## 5. Échecs partiels
 
-Un peer KO ne bloque pas la réplication des autres : chaque push est indépendant. Le comportement de la recherche face à un peer non-répliqué dépend de `allowSkipReplication` :
+Un peer KO ne bloque pas la réplication des autres : chaque push est indépendant. Côté recherche, le comportement est **asynchrone par construction** (doc Splunk 9.4) : la recherche distribuée s'exécute sur le peer même si le dernier cycle de réplication a échoué — le peer répond avec le **bundle précédemment reçu** (potentiellement obsolète).
 
-- **`allowSkipReplication=false` (défaut)**. La recherche attend que tous les peers aient le bundle (ou abandonne après timeout). Conséquence : un peer durablement en retard bloque toutes les recherches distribuées sur le SH. C'est la sécurité maximale (complétude) mais c'est aussi la source numéro un de symptôme « recherche bloquée en attente bundle » (chap. 05 branche H).
-- **`allowSkipReplication=true`**. La recherche démarre sur les peers à jour et **ignore** le peer en retard. Résultats partiels sans avertissement explicite. Acceptable seulement dans des contextes où la complétude n'est pas critique ; risqué pour de l'alerting et de la conformité.
+Les timeouts qui bornent un push sont définis dans `distsearch.conf [replicationSettings]` côté SH :
 
-Le bon choix dépend du cas d'usage :
+- `connectionTimeout` (défaut **60 s**) : temps maximum d'attente avant que la connexion initiale du SH vers un peer expire.
+- `sendRcvTimeout` (défaut **60 s**) : temps maximum d'attente pendant l'envoi de la réplication complète vers un peer.
 
-| Cas | Recommandation |
-| --- | --- |
-| Recherches d'alerting / SOC | `allowSkipReplication=false`. Mieux vaut une alerte qui rate son créneau que des résultats partiels muets. |
-| Dashboards de monitoring d'aperçu | `allowSkipReplication=true` acceptable, avec mention explicite dans la doc du dashboard. |
-| Compliance / reporting régulier | `allowSkipReplication=false`. La traçabilité est non négociable. |
-| Recherches exploratoires ad hoc | Au cas par cas — `allowSkipReplication=false` reste le défaut sain. |
+Quand ces timeouts expirent (peer down, réseau congestionné, lien lent, bundle volumineux), le cycle de push échoue pour ce peer et `splunkd.log` émet un `WARN DistributedBundleReplicationManager - bundle replication to N peer(s) took too long`. **Splunk ne « saute » pas le peer pour la recherche** : il le laisse répondre avec son bundle précédent. La conséquence opérationnelle (artefacts obsolètes, lookups périmées, résultats incohérents jusqu'au prochain push réussi) doit être surveillée explicitement — Splunk n'émet pas d'avertissement utilisateur côté UI de recherche.
 
 ### Symptômes d'un échec partiel
 
