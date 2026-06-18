@@ -82,7 +82,7 @@ La table suivante donne l'entrée directe par symptôme observable. Elle est vol
 | --- | --- | --- |
 | `splunk apply shcluster-bundle` échoue ou ne propage pas | Configuration bundle SHC | chap. 01 + chap. 05 (branche A) |
 | Un membre SHC affiche une app dans une version différente des autres | Configuration bundle SHC + conf replication interne | chap. 01 + chap. 05 (branche B) |
-| Bundle SH → peers dépasse la taille `max_content_length` | Knowledge bundle | chap. 02 + chap. 05 (branche C) |
+| Bundle SH → peers dépasse la taille `maxBundleSize` (côté SH) ou `max_content_length` (côté peer) | Knowledge bundle | chap. 02 + chap. 05 (branche C) |
 | Un peer particulier ne reçoit pas le knowledge bundle | Knowledge bundle | chap. 03 + chap. 05 (branche D) |
 | Les peers ont des hashes de bundle différents pour le même SH | Knowledge bundle | chap. 03 + chap. 05 (branche E) |
 | Recherche bloquée « waiting for bundle replication » | Knowledge bundle | chap. 04 + chap. 05 (branche H) |

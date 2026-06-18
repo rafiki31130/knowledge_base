@@ -106,11 +106,11 @@ flowchart TB
     F3 --> OUT["sh_guid-epoch-hash.bundle"]
     F3 --> REFINE["refineConf<br/>(sous-bundle cascading)"]
 
-    LIMIT["max_content_length<br/>(plafond)"]
-    OUT -.->|"si > limite : erreur"| LIMIT
+    LIMIT["maxBundleSize cote SH (MB)<br/>+ max_content_length cote indexer (bytes)"]
+    OUT -.->|"si > limite : erreur, push abandonne"| LIMIT
 ```
 
-Le SH assemble son bundle à partir de trois sources. Les filtres réduisent **avant** emballage. Le nom du fichier produit porte un hash : deux bundles avec hash différent ont nécessairement un contenu différent. Le `refineConf` est un sous-ensemble réservé à la cascade (chap. 03). Le plafond `max_content_length` est un garde-fou : si le bundle dépasse, la réplication échoue avec un message explicite, plutôt que de pousser un bundle géant au prix du débit.
+Le SH assemble son bundle à partir de trois sources. Les filtres réduisent **avant** emballage. Le nom du fichier produit porte un hash : deux bundles avec hash différent ont nécessairement un contenu différent. Le `refineConf` est un sous-ensemble réservé à la cascade (chap. 03). Le plafond effectif est **double** : `maxBundleSize` (en MB) dans `[replicationSettings]` de `distsearch.conf` côté SH borne la taille avant push ; côté indexer/peer, `max_content_length` (en bytes) borne la taille que le peer accepte de recevoir. Si on relève `maxBundleSize` côté SH, il faut relever symétriquement `max_content_length` côté peers, sinon le push échoue avec un message explicite côté peer (cf. [Limittheknowledgebundlesize](https://docs.splunk.com/Documentation/Splunk/9.4.1/DistSearch/Limittheknowledgebundlesize)).
 
 ## 5. La stanza `[replicationSettings]` de `distsearch.conf`
 
@@ -118,7 +118,7 @@ C'est la stanza centrale qui pilote la taille, la concurrence et les timeouts de
 
 ```ini
 [replicationSettings]
-max_content_length = 2147483648
+maxBundleSize = 2048
 max_memory_per_batch_mb = 100
 replicationThreads = auto
 connectionTimeout = 60
@@ -129,13 +129,15 @@ allowSkipReplication = false
 
 | Paramètre | Effet | Quand l'ajuster |
 | --- | --- | --- |
-| `max_content_length` | Taille maximale (octets) d'un bundle. 2 Gio par défaut. | Très rarement à augmenter — la bonne réponse est presque toujours de réduire le bundle via blacklist (cf. piège 1). |
+| `maxBundleSize` | Taille maximale d'un bundle **en mégaoctets**, côté SH. Si un bundle dépasse cette valeur, la réplication n'a pas lieu et un message d'erreur est journalisé. Maximum 102400 (100 Go). Cf. [Limittheknowledgebundlesize](https://docs.splunk.com/Documentation/Splunk/9.4.1/DistSearch/Limittheknowledgebundlesize). | Très rarement à augmenter — la bonne réponse est presque toujours de réduire le bundle via `replicationBlacklist` / `replicationDenylist` (cf. piège 1). Si on l'augmente, **augmenter symétriquement `max_content_length` côté indexer d'au moins la même quantité** (attention à l'unité : `maxBundleSize` en MB, `max_content_length` en bytes). |
 | `max_memory_per_batch_mb` | Mémoire allouée par batch de réplication. | À monter si les logs montrent des erreurs OOM lors du push (`splunkd.log`). |
 | `replicationThreads` | Nombre de threads parallèles utilisés pour pousser vers les peers. `auto` par défaut (dépend du nombre de cœurs). | À fixer manuellement si l'auto-tuning produit trop de concurrence en environnement contraint. |
 | `connectionTimeout` | Timeout d'ouverture de connexion vers un peer. | À monter si réseau lent ou peer surchargé — diagnostiquer la cause avant de masquer. |
 | `sendRcvTimeout` | Timeout des phases send/recv. | À monter pour des bundles très gros sur lien lent — mais reduce-then-fix. |
 | `excludeReplicatedLookupSize` | Taille (Mo) au-delà de laquelle une lookup est exclue du bundle. `100` par défaut. | À adapter en fonction de la taille des lookups métier. |
 | `allowSkipReplication` | Si `true`, la recherche peut continuer en sautant les peers dont la réplication a échoué. Défaut `false`. | À activer **seulement** avec compréhension claire du compromis (cf. chap. 04 § 3). |
+
+> **Côté indexer/peer** : `max_content_length` (dans `[httpServer]` de `server.conf` du peer, en **bytes**) borne la taille du payload que le peer accepte de recevoir. C'est le pendant côté réception de `maxBundleSize`. Le levier canonique pour la **taille bundle** est `maxBundleSize` côté SH ; `max_content_length` côté peer doit être augmenté symétriquement quand on monte `maxBundleSize`, sinon le push échoue avec une erreur explicite côté peer (« bundle exceeds max content length »).
 
 ### `[replicationAllowlist]` / `[replicationBlacklist]`
 
@@ -225,7 +227,7 @@ Détails complets et autres SPL dans le chap. 06 § 4.
 - **Lookups massives qui font exploser le bundle.** Un fichier de référence de 500 Mo placé sous `etc/apps/<app>/lookups/` est embarqué dans chaque bundle envoyé à chaque peer, à chaque cycle (en delta tant que possible, en full sinon). Solution : externaliser la lookup en index dédié interrogé par `lookup` ou par jointure, ou utiliser `excludeReplicatedLookupSize` pour l'exclure systématiquement (mais alors la recherche qui en a besoin doit la trouver autrement côté peer — voie de garage).
 - **`replicationBlacklist` mal scopée.** Patterns trop larges qui excluent du contenu nécessaire (par exemple toutes les lookups d'une app par mégarde). Symptôme : recherches qui fonctionnent en local sur le SH mais retournent vides ou en erreur quand distribuées. Tester chaque blacklist avec un apply à blanc et une recherche distribuée témoin avant industrialisation.
 - **`shareBundles=false` sur un membre SHC.** Désactive le push knowledge bundle depuis ce membre. Sauf cas explicite (SH dédié à une tâche locale, ce qui est inhabituel dans un SHC), c'est une configuration qui fait que les recherches du membre n'ont pas accès aux peers correctement — manifestation : recherches du membre vides ou tronquées alors que les autres membres fonctionnent. Vérifier dans `distsearch.conf` que `shareBundles=true` est l'état effectif sur tous les membres.
-- **Augmenter `max_content_length` au lieu de réduire le bundle.** Tentation classique face à une erreur « bundle exceeds max content length » : passer la limite de 2 Gio à 4 Gio. Faux gain : le bundle s'engorge sur le lien, la réplication prend plus longtemps, les recherches attendent. Toujours commencer par réduire (blacklist, externaliser les lookups).
+- **Augmenter `maxBundleSize` (côté SH) ou `max_content_length` (côté peer) au lieu de réduire le bundle.** Tentation classique face à une erreur « bundle exceeds max content length » ou « bundle exceeds maxBundleSize » : passer la limite côté SH (`maxBundleSize` en MB) et côté peer (`max_content_length` en bytes). Faux gain : le bundle s'engorge sur le lien, la réplication prend plus longtemps, les recherches attendent. Toujours commencer par réduire (blacklist/denylist, externaliser les lookups). Si la montée est inévitable, **les deux paramètres doivent être augmentés symétriquement** — relever seulement l'un des deux côtés produit une erreur de réception silencieuse difficile à diagnostiquer.
 - **`allowSkipReplication=true` activé sans comprendre le compromis.** L'option fait passer la recherche en mode best-effort : un peer dont le bundle n'a pas été répliqué est sauté silencieusement. Conséquence : résultats partiels sans avertissement explicite. Acceptable seulement dans des contextes où la complétude n'est pas critique (dashboards d'aperçu) et jamais en alerting.
 
 ## Quand escalader / quand décider

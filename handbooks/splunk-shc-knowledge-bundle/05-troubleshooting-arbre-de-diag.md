@@ -297,7 +297,7 @@ Outils pertinents (chap. 06 § 1) :
 Avant toute panne, monter ces métriques en saved searches programmées avec seuils :
 
 - **Hash convergence rate.** Pourcentage de peers à hash égal au hash courant SH-déclaré sur la fenêtre dernière heure. Cible : 100 % stable. Alerte si < 95 % plus de 10 min.
-- **Bundle size trend.** Taille du bundle en sortie de constitution. Alerte si dépassement de 80 % de `max_content_length` ou croissance > 20 % en 24h.
+- **Bundle size trend.** Taille du bundle en sortie de constitution. Alerte si dépassement de 80 % de `maxBundleSize` (côté SH, en MB) ou croissance > 20 % en 24h.
 - **Replication cycle duration.** Durée moyenne d'un cycle de push. Alerte si > 2× baseline sur 1h.
 - **Failed cycles count.** Compte des cycles en erreur sur 1h. Alerte si > 0.
 - **`splunkd.log` `DistributedBundleReplicationManager` WARN/ERROR rate.** Compte par heure. Alerte si > 5/h.
