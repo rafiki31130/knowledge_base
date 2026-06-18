@@ -148,7 +148,7 @@ deployer. Verdict du point de vue **cluster** (propagation aux membres).
 | `distsearch.conf` — `[distributedSearch] servers` (ajout de search peer)          | **RESTART**                                | ⚠️ « does not support reload » : touche le moteur de recherche distribuée → rolling restart forcé                                                                                                |
 | `web.conf` — `httpport` (port web)                                                | **non-effectif**                           | ⚠️ web-tier : le captain skippe le restart splunkd **et** le port ne rebinde pas → changement inefficace tant qu'aucun restart réel n'a lieu                                                     |
 | App **installée** / **activée-désactivée** via bundle                             | RELOAD                                     | si le contenu de l'app est reloadable ; le restart dépend du **contenu**, pas de l'acte d'installer                                                                                              |
-| App **désinstallée** (retirée du bundle deployer)                                 | **NO-OP (pas de purge)**                   | ⚠️ le push deployer est **additif** : retirer une app du staging ne la supprime pas des membres. Désinstaller réellement = acte **manuel par membre** (`rm -rf etc/apps/<app>` + reload/restart) |
+| App **désinstallée** (retirée du bundle deployer)                                 | **RESTART (destructif)**                   | retirer du bundle une app que le deployer avait **installée** la **supprime** des membres **et** exige un **restart** (confirmé en production). *Une observation de banc isolée avait conclu « NO-OP/pas de purge », mais le test était biaisé (app désactivée juste avant dans une séquence enchaînée) — non représentatif.* |
 | Conf locale d'un membre (`etc/system/local`, hors deployer)                       | NO-OP cluster + RESTART-REQUIRED **local** | le deployer ne touche pas `system/local` : pas de réplication, restart manuel du seul membre édité pour effectivité                                                                              |
 | Objet créé en **runtime** (REST/UI) sur un membre                                 | réplication inter-membres (≈ RELOAD)       | mécanisme **distinct** du push deployer : la réplication d'artefacts propage membre-à-membre, sans restart                                                                                       |
 
@@ -160,7 +160,8 @@ défaut) et `-decommission_search_jobs_wait_secs`.
 > **Lecture opérationnelle SHC** : la surface restart réelle est **plus étroite**
 > que ne le laisse penser la doc. L'essentiel des confs (auth LDAP, inputs, apps
 > reloadables, index SH) **RELOAD**. Les vrais déclencheurs de restart :
-> `server.conf` (`[httpServer]`, `[sslConfig]`) et `distsearch.conf servers`.
+> `server.conf` (`[httpServer]`, `[sslConfig]`), `distsearch.conf servers`, et la
+> **désinstallation d'une app installée par le deployer** (destructive + restart).
 
 ---
 
@@ -232,11 +233,11 @@ redondance pour drainer).
   `authentication.conf` sont **rechargés à chaud côté SHC** mais **restart côté
   indexer**. Toujours raisonner *par topologie*, jamais « cette conf = restart »
   dans l'absolu.
-- **Désinstallation d'app : additif vs autoritatif.** Retirer une app du bundle
-  **deployer SHC** ne la purge pas des membres (push **additif** → désinstallation
-  manuelle par nœud). Retirer une app du bundle **manager IDXC** la **purge**
-  des peers (bundle **autoritatif**). Piège silencieux côté SHC : on croit avoir
-  désinstallé, l'app est toujours là.
+- **Désinstallation d'app = destructive (ne pas la croire inoffensive).** Retirer
+  du bundle une app **installée par le deployer (SHC)** ou par le **manager
+  (cluster d'indexers)** la **supprime des nœuds**. Côté **SHC** c'est en outre
+  **restart-required** (confirmé en production). Ne jamais présumer qu'enlever une
+  app du bundle est sans effet : c'est un changement **destructif** propagé.
 - **Suppression d'index = restart MAIS buckets non purgés.** Retirer un index du
   bundle indexer déclenche un restart, mais les **buckets restent sur disque** :
   la purge des données est une opération distincte.
