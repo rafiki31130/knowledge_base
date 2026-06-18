@@ -213,7 +213,7 @@ qu'il peut et n'advertit au manager que les confs non-rechargeables.
 
 **Modulation du rolling restart IDXC** : le redémarrage **par lots** se règle via
 `server.conf [clustering]` (`percent_peers_to_restart`) ou `edit cluster-config
--percent_peers_to_restart <n>` — ce **n'est pas** un argument de la commande CLI
+-percent_peers_to_restart `<n>` — ce **n'est pas** un argument de la commande CLI
 `rolling-restart cluster-peers` (qui le rejette). Le **searchable rolling
 restart** (`-searchable true`), qui préserve la continuité de recherche,
 **nécessite plus de 2 peers** (sous 3 peers, Splunk le refuse : pas assez de
