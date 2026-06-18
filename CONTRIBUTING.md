@@ -37,6 +37,22 @@ En cas de doute : **anonymiser ou ne pas écrire**.
 - Blocs de code annotés (` ```spl `, ` ```bash `, etc.).
 - Français par défaut ; anglais accepté pour un sujet déjà cadré en anglais.
 
+## Schémas et diagrammes — Mermaid par défaut
+
+Dès qu'une fiche décrit une **architecture, un flux de données, une séquence d'échanges,
+une machine à états ou une hiérarchie**, intégrer un schéma **[Mermaid](https://mermaid.js.org/)**
+dans un bloc ` ```mermaid `. GitHub le rend nativement — c'est ce qui permet de saisir le
+*quoi/comment* d'un coup d'œil sans dépendre d'une image externe.
+
+- **La norme, c'est le schéma** : une page « conceptuelle » sans diagramme est l'exception à
+  justifier, pas l'inverse. Préférer un petit diagramme juste à un long paragraphe descriptif.
+- **Mermaid > image** : pas de capture d'écran ni de `.png` d'archi (versionnable, diffable,
+  éditable en texte ; et une capture risque de fuiter du sensible — cf. interdits).
+- **Fallback ASCII** seulement si Mermaid n'est pas adapté (table de correspondance, art figé).
+- **Anonymisation identique** : les libellés de nœuds suivent les mêmes interdits que le texte
+  (placeholders génériques `service-01`, `<tenant>`, jamais d'hôte/IP/FQDN réel).
+- Syntaxe, types de diagrammes et pièges : [cheat-sheet Mermaid](./cheat-sheets/mermaid-obsidian.md).
+
 ## Format des liens
 
 Le dépôt est lu sur **GitHub**. Seule la syntaxe markdown standard est rendue.

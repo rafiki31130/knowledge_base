@@ -9,7 +9,7 @@ partagée — ce qui est ici a vocation à avoir été relu / vérifié.
 - Principes de fonctionnement (« comment ça marche »).
 - Fiches de référence (SPL, regex, formats de logs…).
 - Recettes génériques (recherches d'investigation type, méthodes).
-- Schémas conceptuels, lexiques, pièges connus.
+- Schémas conceptuels (**Mermaid par défaut**, cf. [`CONTRIBUTING.md`](./CONTRIBUTING.md#schémas-et-diagrammes--mermaid-par-défaut)), lexiques, pièges connus.
 
 ## Ce qu'on n'y met pas
 

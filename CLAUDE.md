@@ -51,6 +51,9 @@ Branche unique : `main`. Pas de PR, pas de revue obligatoire.
 - Un fichier = une idée ; pas de duplication (lien vers la source)
 - Titre H1 unique par page
 - Blocs de code annotés : ` ```spl `, ` ```bash `, ` ```json `…
+- **Schémas en Mermaid par défaut** : toute archi/flux/séquence/état s'illustre par un bloc
+  ` ```mermaid ` (rendu nativement par GitHub), pas par une image — ASCII en fallback seul.
+  Libellés anonymisés comme le reste. Détails : [cheat-sheet Mermaid](./cheat-sheets/mermaid-obsidian.md)
 - Liens internes : markdown standard avec chemin relatif + extension `.md`
   (ex. `[texte](../concepts/parsing.md)`) — wikilinks `[[...]]` interdits
 - Langue : français par défaut
