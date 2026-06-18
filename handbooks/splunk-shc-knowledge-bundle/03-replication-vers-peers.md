@@ -209,6 +209,6 @@ Le diagnostic se mène en croisant l'hash côté SH (`splunk show distributed-pe
 - [Splunk DistSearch 9.4 — Cascading knowledge bundle replication](https://docs.splunk.com/Documentation/Splunk/9.4.1/DistSearch/Cascadingknowledgebundlereplication)
 - [Splunk DistSearch 9.4 — Mounted knowledge bundle replication](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Mountedknowledgebundlereplication)
 - [Splunk DistSearch 9.4 — Troubleshoot knowledge bundle replication](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Troubleshootknowledgebundlereplication)
-- [Splunk Admin 9.4 — distsearch.conf (stanzas `[mounted_bundle_settings]`, `[replicationSettings]`)](https://docs.splunk.com/Documentation/Splunk/9.4.0/Admin/Distsearchconf)
+- [Splunk Admin 9.4 — distsearch.conf (stanzas `[replicationSettings]`, `[searchhead:<name>]`)](https://docs.splunk.com/Documentation/Splunk/9.4.0/Admin/Distsearchconf)
 - [Splunk DistSearch 9.4 — Configure distributed search](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Configuredistributedsearch)
 - [Splunk REST API 9.4 — Distributed search endpoints](https://docs.splunk.com/Documentation/Splunk/9.4.0/RESTREF/RESTprolog)

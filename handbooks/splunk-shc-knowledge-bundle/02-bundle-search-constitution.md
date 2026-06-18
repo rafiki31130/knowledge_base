@@ -8,7 +8,7 @@
 - Le bundle contient un sous-ensemble de `etc/apps/`, `etc/users/`, `etc/system/local/` filtré par `distsearch.conf` ; il ne contient pas tout `etc/` et n'a pas vocation à le faire.
 - Le bundle a un nom de fichier de la forme `<sh_guid>-<epoch>-<hash>.bundle` ; le hash dépend du contenu. **Deux bundles de hash différent = deux contenus différents**, c'est l'invariant principal du diagnostic (chap. 03 et 05).
 - Splunk choisit seul entre un envoi *full* (bundle complet) et un *delta* (différentiel par rapport au bundle précédent). L'admin n'a pas de levier pour forcer l'un ou l'autre — il peut influer indirectement via la taille du bundle et la fréquence des modifications.
-- Le `refineConf` est un sous-bundle réduit utilisé dans le contexte de la réplication *cascading* (chap. 03) ; il représente l'ensemble minimal que les peers de niveau 2 doivent recevoir.
+- Le `refineConf` est un sous-bundle réduit utilisé dans le contexte de la réplication *cascading* (chap. 03) ; il représente l'ensemble minimal que les peers de niveau 2 doivent recevoir. *Terminologie interne Splunk observée — non documentée publiquement par Splunk dans les pages 9.4 publiques au moment de la rédaction.*
 
 ## 1. Contenu réel d'un knowledge bundle
 

@@ -24,6 +24,8 @@ Le tableau ci-dessous est à reproduire dans un cheat-sheet local. Chaque comman
 | `splunk apply cluster-bundle --answer-yes -auth admin:<password>` (sur CM) | Pousse le configuration bundle indexer cluster du CM vers les peers indexer. | [Updatepeerconfigurations](https://docs.splunk.com/Documentation/Splunk/9.4.0/Indexer/Updatepeerconfigurations) |
 | `splunk validate cluster-bundle --check-restart -auth admin:<password>` (sur CM) | Valide le configuration bundle indexer cluster avant push, prédit les peers qui demanderont restart. | [Updatepeerconfigurations](https://docs.splunk.com/Documentation/Splunk/9.4.0/Indexer/Updatepeerconfigurations) |
 | `splunk show cluster-bundle-status -auth admin:<password>` (sur CM) | État de propagation du bundle indexer cluster aux peers. | [Updatepeerconfigurations](https://docs.splunk.com/Documentation/Splunk/9.4.0/Indexer/Updatepeerconfigurations) |
+| `splunk show cluster-manager-status -auth admin:<password>` (sur CM) | État global du cluster manager indexer : peers connus, replication/search factor, état service. Cité par chap. 05 D1. | Observé empiriquement — pendant CLI de l'endpoint REST `/services/cluster/manager/info`. |
+| `splunk show cluster-manager-peers -auth admin:<password>` (sur CM) | Liste des peers indexer connus du cluster manager avec leur état. Cité par chap. 05 H3. | Observé empiriquement — pendant CLI de l'endpoint REST `/services/cluster/manager/peers`. |
 | `splunk rolling-restart cluster-peers -auth admin:<password>` (sur CM) | Restart roulant des peers indexer cluster après un cluster-bundle qui requiert restart. | [Restartthecluster](https://docs.splunk.com/Documentation/Splunk/9.4.2/Indexer/Restartthecluster) |
 | `splunk list distributed-peer -auth admin:<password>` (sur SH) | Liste les peers de search distribuée connus du SH et leur état. La forme exacte de la sous-commande peut varier ; `splunk help distributed` la confirme sur l'instance. | [Configuredistributedsearch](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Configuredistributedsearch) |
 | `splunk show distributed-peers -auth admin:<password>` (sur SH) | Alternative à la précédente — affichage souvent plus lisible. Inclut le hash de bundle SH-déclaré quand pertinent. | [Configuredistributedsearch](https://docs.splunk.com/Documentation/Splunk/9.4.0/DistSearch/Configuredistributedsearch) |
@@ -245,7 +247,7 @@ curl -k -u admin:<password> \
 
 Lecture : (1) état vu du SH (down ? quarantined ?). (2) état vu du CM (enrôlé ? actif ?). Une divergence entre les deux vues (peer up côté CM, down côté SH) oriente vers un problème de routage / `serverList` côté SH.
 
-## 6. Notes générales d'usage
+## 6. Quand escalader / quand décider
 
 - **Toujours commencer par un échantillon temporel resserré** (`earliest=-1h@m`) avant d'élargir. La masse de `_internal` est suffisante pour que des recherches sur 7 jours soient coûteuses.
 - **Anonymiser les outputs** quand on copie un résultat dans une demande de support ou un mail. Les noms d'hôte réels n'ont pas leur place hors du périmètre opérationnel interne.

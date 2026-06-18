@@ -66,7 +66,7 @@ Face à un incident, l'entrée est toujours la même : chapitre 05 (arbre de dia
 | Cluster manager (indexer cluster, terminologie 9.x) | `cm01` |
 | Standalone search head (hors SHC, pour contre-exemple) | `sh01` |
 | Forwarders | `uf01`, `hf01` |
-| Domaine | `example.com`, `example.com` |
+| Domaine | `example.com`, `corp.example.com` |
 | IP / CIDR | `10.0.0.0/24`, `192.0.2.0/24` (RFC 5737), `2001:db8::/32` |
 | Utilisateurs | `alice`, `bob`, `svc_app` |
 | Apps internes | `my_company_app`, `soc_app` |

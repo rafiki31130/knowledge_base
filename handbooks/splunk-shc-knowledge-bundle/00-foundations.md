@@ -125,7 +125,7 @@ flowchart LR
       P1["peer01"]
       P2["peer02"]
       P3["peer03"]
-      SH1 -->|"reseplication bundle<br/>(classic / cascading / mounted)"| P1
+      SH1 -->|"réplication bundle<br/>(classic / cascading / mounted)"| P1
       SH1 --> P2
       SH1 --> P3
     end
