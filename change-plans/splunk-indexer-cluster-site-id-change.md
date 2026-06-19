@@ -122,14 +122,27 @@ protects continuity, not maintenance mode.
    RF/SF re-converge as the origin copies re-home to the new site (observed
    convergence: seconds to ~1 minute for a small cluster).
 
-   > **Order is mandatory — `site_mappings` and the trim must be the same edit.**
-   > A `site_mappings = <old_site>:<new_site>` whose *source* site is **still
-   > present** in `available_sites` is **rejected** by Splunk and crash-loops the
-   > manager:
-   > `Available site cannot be present in From-relation of tuple in site_mappings`.
-   > So you **cannot** set `site_mappings` up front (e.g. together with adding the
-   > new labels in step 1). The old label must leave `available_sites` in the very
-   > restart that introduces its mapping — hence this single combined edit.
+   > **Why this exact order is the *only* valid one.** Three Splunk constraints,
+   > each verified empirically (§8), box you into the sequence above:
+   > 1. **`site_mappings` cannot reference a site still in `available_sites`.**
+   >    Setting `site_mappings = <old_site>:<new_site>` while `<old_site>` is still
+   >    listed is rejected and crash-loops the manager:
+   >    `Available site cannot be present in From-relation of tuple in site_mappings`.
+   >    → `site_mappings` can only appear once the old label is being removed.
+   > 2. **A peer only registers if its `[general] site` is in `available_sites`.**
+   >    A peer still on `<old_site>` whose label has been dropped from
+   >    `available_sites` is **rejected at heartbeat** (`site <old_site> not in
+   >    available_sites`) and ejected — losing its data from search. → the old
+   >    label must stay in `available_sites` until **after** the peers are renamed.
+   > 3. **`site_mappings` re-homes *buckets*, it does not register *peers*.** The
+   >    `site ∈ available_sites` check runs **before** any `site_mappings`
+   >    processing, so you cannot shortcut by listing only the target sites up
+   >    front and letting the mapping pull the old-labelled peers in — it won't.
+   >
+   > Combined: rename the peers **while both old and new labels are in
+   > `available_sites`** (constraint 2), then drop the old labels **and** add their
+   > `site_mappings` **in the same manager restart** (constraint 1), which re-homes
+   > the stranded buckets (constraint 3). That is exactly steps 1→3 above.
 4. **Manager and search head site.** The manager itself must sit on a **real**
    site (set its `[general] site` to a surviving `<new_site>` if it was on a
    renamed one). A search head set to `site0` (search-affinity disabled) needs
@@ -313,9 +326,17 @@ with **zero** ticks losing a `host`.
 - A 5th run tried a "cleaner" ordering — set `site_mappings` **up front**, with
   the old sites still in `available_sites` — and it is **structurally rejected**:
   the manager refuses the config (`Available site cannot be present in
-  From-relation of tuple in site_mappings`) and crash-loops. This proves the
-  combined edit of step 3 (drop the old label **in the same restart** that adds
-  its mapping) is **mandatory**, not stylistic.
+  From-relation of tuple in site_mappings`) and crash-loops.
+- A 6th run removed the old sites up front instead — `available_sites = <targets
+  only>` **plus** `site_mappings` — testing whether the mapping alone could pull
+  the still-old-labelled peers in **without renaming them**. The config is
+  **accepted** (the constraint above is lifted), but the **peers are rejected at
+  heartbeat** (`site <old_site> not in available_sites`) and ejected — the probe
+  recorded a real outage. This proves `site_mappings` is a **bucket** mechanism,
+  not a peer-registration one, and that the old label must remain in
+  `available_sites` until the peers are renamed.
+- Together, runs 4/5/6 show the ordering of §2.2 is the **unique** valid sequence,
+  forced by the three constraints listed in the §2.2 box.
 
 **Independent audit.** Run 4 was re-verified by an independent reviewer who
 re-derived the result from the raw probe log (0/406 ticks lost a `host` →
