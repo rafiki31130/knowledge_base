@@ -1,462 +1,310 @@
-# Splunk indexer cluster — site id change
+# Splunk multisite cluster — in-place site id rename
 
-Generic change plan template for changing the `site` attribute of one or
-more members of a Splunk indexer cluster. Treat this fiche as a
-**template**: every value in angle brackets must be confirmed against the
-target deployment, and the variant of the change must be matched to the
-correct **official Splunk procedure** before execution.
+Change plan for **renaming the `site` label of indexer peers** in an existing
+**multisite** indexer cluster, in place, with **zero search interruption** and
+**no persistent replication/search-factor degradation**.
 
-> **Important.** There is no single official procedure for "changing a site
-> id". Splunk documents distinct procedures for distinct variants. The
-> wrong assumption — that you only need to edit `[general] site` in
-> `server.conf` and restart — is **explicitly contradicted** by Splunk for
-> the peer-move case (see §6, reservation 1). Identify the variant first,
-> then follow the matching official procedure.
+This fiche documents **one method** — the only one that achieved both goals in a
+lab — namely **`splunk offline` + `site_mappings`**. The naïve in-place rename
+(edit `[general] site` and restart) is **proven to fail**; see §1 and the
+experiment results in §8.
 
-## 1. Generic description of the change
+> **Scope.** This is about *relabelling* sites the cluster already has (e.g.
+> `<old_site>` → `<new_site>` across the manager and the peers carrying it),
+> keeping the same topology. Two genuinely different operations are **out of
+> scope** and have their own official procedures (see References): *moving a peer
+> to a different physical site* (offline + wipe + reprovision) and *migrating a
+> single-site cluster to multisite*.
 
-In a Splunk indexer cluster, each member (cluster manager, peer, search
-head) declares which **site** it belongs to via the `site` attribute in
-`server.conf` (`[general] site = <siteX>`). The cluster manager uses these
-site labels together with `site_replication_factor` and
-`site_search_factor` to decide where bucket copies live and which copies
-are searchable.
+> **Authentication.** CLI examples below use `-auth <admin>:<password>` for
+> readability. Use the authentication mechanism in force (REST token, SSO, mTLS)
+> and **never leave credentials in logs or shell history** (pipe secrets via
+> stdin; do not pass them on the command line).
 
-A "site id change" covers three distinct variants, which have **different**
-official procedures:
+## 1. Why the obvious approach fails
 
-- **Variant A — Move a peer to a new site.** A peer that used to belong to
-  `<site_a>` becomes part of `<site_b>` (e.g. physical relocation, mistake
-  during initial deployment caught after data has accumulated). Official
-  procedure: *Move a peer to a new site* — see §6 reservation 1.
-- **Variant B — Migrate single-site to multisite.** The cluster, currently
-  `multisite = false`, is reconfigured as a multisite cluster with
-  `available_sites = <site1>,<site2>,…`. Official procedure: *Migrate an
-  indexer cluster from single-site to multisite* — see §6 reservation 2.
-- **Variant C — Rename a site label.** The cluster keeps its topology but
-  the label `<old_site>` becomes `<new_site>` across the manager and the
-  peers that carry it. Splunk does **not** publish a dedicated procedure
-  for this variant; it must be built from the multisite configuration
-  pages (see §6 reservation 3) and treated with extra care.
+Each cluster member declares its site via `[general] site = <siteX>` in
+`server.conf`. The manager uses these labels with `site_replication_factor` and
+`site_search_factor` to place bucket copies and designate searchable (primary)
+copies.
 
-All three variants touch `server.conf` on the cluster manager
-(`[clustering] available_sites`, `site_replication_factor`,
-`site_search_factor`, and possibly `multisite`), and on every affected
-indexer (`[general] site`) and search head (`[general] site` when
-site-based search affinity is in use). They also affect forwarder
-configurations using `indexerDiscovery` or `site_failover` when present.
+The "obvious" rename — add `<new_site>` to `available_sites`, edit
+`[general] site = <new_site>` on each peer, restart it, then drop `<old_site>` —
+**fails on two independent counts** (both observed empirically, §8):
 
-The goal of the change is to make the cluster's site topology reflect a
-new operational reality without data loss, and with bucket counts
-converging back to the configured replication and search factors after the
-change.
+1. **Search outage during peer restarts.** A plain `splunkd` restart drops the
+   peer abruptly; the primary (searchable) copies it held are **not** handed off
+   first. Searches for that peer's data are incomplete until the peer returns —
+   the surviving cross-site copy is not promoted in time. (Under maintenance mode
+   the manager does not reassign primaries at all; even outside maintenance mode
+   a plain restart is not graceful.)
+2. **Persistent RF/SF violation (stranded buckets).** A bucket's **origin site
+   is fixed at creation and is not re-homable** by any direct command. Once
+   `<old_site>` leaves `available_sites`, a bucket whose origin is `<old_site>`
+   needs an origin copy on a site that no longer has a peer → unsatisfiable. The
+   manager then reports **`No fixup tasks in progress`** *while* RF/SF stay
+   **not met** — it does not even attempt repair. Waiting does not help; this is
+   structural. Inserting a "wait for RF/SF met after each step" gate does not
+   rescue it either — the gate simply times out after the first peer.
 
-## 2. Risks and service interruption
+Net effect of the naïve rename: the cluster is left **searchable but
+under-replicated**, with no automatic recovery.
 
-### Risks
+## 2. The method — `splunk offline` + `site_mappings`
 
-- **Stranded bucket copies** (Variant A specifically). If a peer is
-  reassigned by editing `server.conf` instead of following the official
-  offline-and-reprovision procedure, its existing local bucket copies stay
-  on the peer but are accounted for under the new site. The cluster
-  manager does **not** automatically rebalance them. Replication and
-  search factors become inconsistent in ways that are hard to recover
-  from.
-- **Bucket fixup storm**. Any site change triggers the manager to
-  re-evaluate per-site bucket placement. The cluster will start a fixup
-  cycle that can move and replicate large volumes of data. Network and
-  disk I/O on indexers will spike.
-- **Replication / Search factor violations**. Until fixup completes, the
-  cluster reports `Replication Factor not met` and `Search Factor not
-  met`. Some buckets may briefly be searchable from fewer sites than
-  intended.
-- **Search affinity disruption**. If `site_search_affinity = true`,
-  queries may suddenly hit a different set of indexers after the change,
-  with cold-cache search latency.
-- **Misalignment between manager and peers**. `available_sites` on the
-  manager must list every site label declared by peers; otherwise affected
-  peers will be rejected from the cluster.
-- **Forwarder routing breakage**. Forwarders using site-aware indexer
-  discovery may stop routing correctly until they pick up the new manager
-  view.
-- **Inconsistent `server.conf`**. A typo in `site = …` will prevent the
-  peer from rejoining; rollback may be needed before fixup even starts.
+Each failure is addressed with the matching official mechanism:
 
-### Service interruption
+- **Continuity ← `splunk offline` (graceful).** It instructs the manager to
+  **reassign the peer's primary/searchable copies to the surviving peers before
+  the peer stops**, so searchability is preserved across the down window. Use
+  **plain `splunk offline`** — *not* `--enforce-counts`, which tries to fully
+  re-establish RF/SF before leaving (impossible with one peer per site) and
+  blocks.
+- **Re-homing the origin copies ← `site_mappings`.** This is Splunk's official
+  **site-decommissioning** mechanism. Mapping `<old_site>:<new_site>` tells the
+  manager that the origin bucket copies bound to the (now removed) `<old_site>`
+  belong to `<new_site>`; the conformance accounting recomputes and the copies
+  re-home onto the new site's peer. This is the signal the manager lacks in the
+  naïve sequence.
 
-- **Ingest**: usually no full outage. Forwarders with autoLB keep sending
-  data; expect transient backoffs while affected peers restart.
-- **Search**: short interruption when the manager re-evaluates the
-  generation. Dashboards may show partial results around each peer
-  restart.
-- **Cluster availability**: degraded (yellow) state for the entire fixup
-  duration; not an outage, but cluster-health alerting will fire.
-- **Estimated duration**: peer restart is seconds; fixup is a function of
-  total bucket count, RF/SF, and inter-peer bandwidth — minutes for a
-  small cluster, hours for a large one. **Variant A's official procedure
-  requires wiping the peer's index database** (see §6 reservation 1),
-  which means the peer rebuilds its bucket copies from other peers — plan
-  the window against the full re-replication, not against a simple
-  restart.
+### 2.1 Preconditions
 
-## 3. Change plan
-
-The exact sequence depends on the variant. Pick the matching official
-procedure (linked in §6) and follow it. The skeleton below highlights what
-is common.
-
-### 3.1 Pre-change (all variants)
-
-1. **Snapshot the current topology** for the rollback plan:
+1. The cluster is **healthy**: `splunk show cluster-status` reports
+   `Replication factor met` / `Search factor met` and `No fixup tasks in
+   progress`.
+2. **All buckets are warm and fully replicated.** Hot, not-yet-replicated
+   buckets are the real cause of long outages during a peer restart — let them
+   roll and replicate before starting. Confirm per-site searchable copies match
+   the configured factor.
+3. Snapshot the topology for rollback (persist outside the nodes):
    ```bash
-   splunk show cluster-status -auth <admin>:<password>
+   splunk show cluster-status --verbose -auth <admin>:<password>
    splunk list cluster-config -auth <admin>:<password>
    splunk btool server list clustering --debug
    splunk btool server list general --debug
    ```
-   Persist this output outside the cluster nodes.
-2. **Capture bucket health baseline**: number of buckets, RF/SF status,
-   list of buckets currently in fixup.
-3. **Confirm cluster manager is healthy** (no recurring fixup errors in
-   `splunkd.log`).
-4. **Pause ingestion-sensitive jobs** for the maintenance window.
-5. **Enable maintenance mode** on the cluster manager to suppress fixup
-   while you reconfigure:
-   ```bash
-   splunk enable maintenance-mode -auth <admin>:<password>
-   splunk show maintenance-mode -auth <admin>:<password>   # confirm
+4. Pre-arrange monitoring suppression (the rename briefly perturbs RF/SF
+   accounting and will fire cluster-health alerts).
+
+### 2.2 Procedure
+
+Rename `<old_site>` → `<new_site>` (repeat the mapping for each site being
+renamed). **Do not hold maintenance mode across the whole sequence** — the
+manager must be free to re-replicate; the graceful `splunk offline` is what
+protects continuity, not maintenance mode.
+
+1. **Manager — declare the new site(s).** Add the new label(s) to
+   `available_sites` so old and new coexist, then restart the manager. The
+   manager is **not** in the data path, so its restart does not interrupt search.
+   ```ini
+   # server.conf on the cluster manager
+   [clustering]
+   available_sites = <old_site>,<new_site>     # both coexist for now
    ```
-
-### 3.2 Variant A — Move a peer to a new site
-
-Follow the official procedure (§6 reservation 1) **literally**. Summary:
-
-1. **Take the peer offline** with `splunk offline` so the manager
-   reassigns its bucket copies to other peers in its current site **before**
-   the peer leaves.
-2. Wait for the manager to confirm the reassignment is complete.
-3. (Physical relocation if applicable.)
-4. **Delete the entire Splunk Enterprise installation on the peer**,
-   including its index database with all bucket copies.
-5. **Reinstall Splunk Enterprise**, re-enable clustering, set
-   `[general] site = <new_site>`.
-6. Confirm the peer rejoins the cluster:
+2. **Each peer — graceful offline, relabel, start.** Per peer carrying
+   `<old_site>`, sequentially (never in parallel):
    ```bash
-   splunk show cluster-status -auth <admin>:<password>
+   splunk offline -auth <admin>:<password>     # plain; NOT --enforce-counts
+   # wait for the manager to confirm primary reassignment is complete
+   # edit [general] site = <new_site> in server.conf
+   splunk start
    ```
-   The peer should appear with its new `Site` value, RF/SF re-converging
-   as the manager replicates bucket copies back to it.
-
-Repeat per affected peer, sequentially, never in parallel.
-
-### 3.3 Variant B — Migrate single-site to multisite
-
-Follow the official procedure (§6 reservation 2). Summary, in order:
-
-1. **Configure the cluster manager for multisite** and restart it. Example
-   shape (real values per the deployment):
-   ```bash
-   splunk edit cluster-config \
-     -mode manager \
-     -multisite true \
-     -available_sites <site1>,<site2> \
-     -site <site1> \
-     -site_replication_factor origin:<r>,total:<R> \
-     -site_search_factor      origin:<s>,total:<S>
-   splunk restart
+   Searchability is preserved throughout (primaries were handed off before the
+   stop).
+3. **Manager — map and trim, in one restart.** Set `site_mappings` **and** remove
+   the old label(s) from `available_sites`, then restart the manager:
+   ```ini
+   # server.conf on the cluster manager
+   [clustering]
+   available_sites = <new_site>                # old label(s) removed
+   site_mappings   = <old_site>:<new_site>     # comma-separate multiple maps
    ```
-2. **Decide whether existing buckets must adhere to the new multisite RF/SF**;
-   the manager has a configuration toggle for this — confirm against the
-   official page.
-3. **Enable maintenance mode** on the manager to avoid unnecessary fixup
-   during peer reconfiguration.
-4. **Configure each existing peer** for multisite, specifying its manager
-   and its `site`. Restart per peer.
-5. **Add new peers** if the new topology requires them.
-6. **Configure each search head** for multisite, specifying its manager
-   and its `site`.
+   RF/SF re-converge as the origin copies re-home to the new site (observed
+   convergence: seconds to ~1 minute for a small cluster).
+4. **Manager and search head site.** The manager itself must sit on a **real**
+   site (set its `[general] site` to a surviving `<new_site>` if it was on a
+   renamed one). A search head set to `site0` (search-affinity disabled) needs
+   **no** change — `site0` is reserved for search heads and never appears in
+   `available_sites`.
 
-### 3.4 Variant C — Rename a site label
+### 2.3 Cleanup
 
-Splunk does not publish a dedicated procedure for renaming a site label in
-place. The two sub-sections below give a **lab-validated** result (tested on a
-multisite cluster of 1 manager + 2 peers, one peer per site, 1 search head,
-`site_replication_factor origin:1,total:2`, search head on `site0`): the **naïve**
-in-place rename fails on two counts, and a **working method** exists by combining
-`splunk offline` with `site_mappings`.
+Once `cluster-status` shows RF/SF met and stable, the `site_mappings` stanza is
+**inert but should be removed** at the next maintenance window to avoid future
+confusion (§6 reservation 5). Verify RF/SF stay met after removing it and
+restarting the manager.
 
-#### 3.4.1 The naïve sequence FAILS — do not use it
+## 3. Risks and service interruption
 
-The "obvious" sequence — add `<new_site>` to `available_sites`, then under
-maintenance mode edit `[general] site = <new_site>` on each peer and restart it
-with a plain restart, then drop `<old_site>` — **fails on two independent counts**,
-both observed empirically:
+- **Transient under-replication.** During each peer's `offline → relabel →
+  start`, that peer's buckets are momentarily below the replication factor —
+  fault tolerance is reduced for the window even though **search stays complete**
+  via the surviving copy. Size the window against the per-peer restart time and
+  avoid overlapping with other risk.
+- **Bucket fixup after re-homing.** Removing the old label + `site_mappings`
+  triggers the manager to re-replicate origin copies onto the new site. On a
+  small cluster this is seconds; on a large one it is a function of bucket count,
+  RF/SF and inter-site bandwidth — size the window accordingly.
+- **Manager / peer misalignment.** `available_sites` must list every label a peer
+  declares, at every instant. Removing `<old_site>` while a peer still carries it
+  gets that peer rejected — always relabel peers (step 2) *before* trimming
+  `available_sites` (step 3).
+- **Inconsistent `server.conf`.** A typo in `site = …` prevents the peer from
+  rejoining. Validate with `btool` before restarting.
+- **Search affinity.** With `site_search_affinity = true`, post-change queries
+  may hit a different indexer set (cold-cache latency). A search head on `site0`
+  (affinity off) is unaffected.
+- **Forwarder routing.** Forwarders using site-aware indexer discovery pick up
+  the new manager view on their next phone-home; static `[tcpout]` lists are
+  unaffected by the relabel.
 
-1. **Search outage during peer restarts.** A plain `splunkd` restart drops the
-   peer abruptly; the primary (searchable) copies it held are not handed off
-   first. Searches for that peer's data go incomplete until the peer returns —
-   the surviving cross-site copy is **not** promoted in time. (Under maintenance
-   mode the manager does not reassign primaries at all; even outside maintenance
-   mode the handoff is not graceful with a plain restart.)
-2. **Persistent replication/search-factor violation (stranded buckets).** A
-   bucket's **origin site is fixed at creation and is not re-homable** by any
-   direct command. Once `<old_site>` is removed from `available_sites`, a bucket
-   whose origin is `<old_site>` requires an origin copy on a site that no longer
-   has a peer → the constraint is unsatisfiable. Crucially, the manager then
-   reports **`No fixup tasks in progress`** *while* RF/SF stay **not met**: it
-   does not even attempt to repair. Waiting does not help — this is structural,
-   not a delay. Interposing a "wait for RF/SF met after each step" gate does not
-   rescue it; the gate simply times out after the first peer.
+**Service interruption (with this method):** none for **search** (graceful
+offline preserves searchability) and none for **ingest** beyond transient
+forwarder backoff while a peer restarts. The cluster shows a **degraded
+(under-replicated)** state during the window — a redundancy reduction, not an
+outage.
 
-Net: the naïve in-place rename leaves the cluster **searchable but
-under-replicated**, with no automatic recovery.
+## 4. Rollback
 
-#### 3.4.2 Working method — `splunk offline` + `site_mappings`
+**Decision criteria** — roll back if a relabelled peer fails to rejoin (and the
+cause is not a trivial typo), RF/SF make no forward progress over a sustained
+window, search shows systematic gaps mapped to the change, or the manager is
+unstable after its restart.
 
-The fix addresses each failure with the matching official mechanism:
+**Steps** (symmetric to §2): re-add `<old_site>` to `available_sites`, revert
+each peer's `[general] site` (graceful `splunk offline` → edit → `start`), and
+remove the `<old_site>:<new_site>` entry from `site_mappings`; or restore the
+`server.conf` files from the §2.1 snapshot and restart the affected `splunkd`
+instances. Let the cluster re-converge and compare `cluster-status` + bucket
+counts against the pre-change snapshot.
 
-- **Continuity** ← `splunk offline` (graceful). It instructs the manager to
-  **reassign the peer's primary/searchable copies to surviving peers before the
-  peer stops**, so searchability is preserved across the down window. Use plain
-  `splunk offline` (**not** `--enforce-counts`, which would try to fully
-  re-establish RF/SF — impossible with one peer per site — and block).
-- **Re-homing the stranded copies** ← `site_mappings`. This is Splunk's official
-  **site-decommissioning** mechanism: mapping `<old_site>:<new_site>` tells the
-  manager that the origin bucket copies bound to the (now removed) `<old_site>`
-  belong to `<new_site>`, which makes the conformance accounting recompute and
-  the copies re-home onto the new site's peer. This is the signal the manager
-  lacks in the naïve sequence.
-
-Validated sequence (per peer carrying `<old_site>` → `<new_site>`):
-
-1. Pre-flight: confirm the cluster is healthy and **all buckets are warm and
-   fully replicated** (`Replication/Search factor met`, `No fixup`). Hot,
-   not-yet-replicated buckets are the real cause of long outages — let them roll
-   and replicate first.
-2. Add the new site label(s) to the manager's `available_sites` (old and new
-   coexist), restart the manager. (The manager is not in the data path; its
-   restart does not interrupt search.)
-3. For each peer: `splunk offline` (plain) → wait for the manager to confirm the
-   primary reassignment → edit `[general] site = <new_site>` → `splunk start`.
-   Searchability is preserved throughout (graceful handoff).
-4. On the manager, **in the same restart**: set
-   `[clustering] site_mappings = <old_site>:<new_site>[,<old_site2>:<new_site2>]`
-   **and** remove the old label(s) from `available_sites`, then restart the
-   manager. RF/SF re-converges (origin copies re-homed to the new site) —
-   observed convergence from seconds to ~1 minute.
-5. **Cleanup**: once RF/SF are met and stable, remove the now-inert
-   `site_mappings` stanza at the next maintenance window (see reservation §6.16).
-
-This sequence achieved **zero search interruption and full RF/SF reconvergence**
-in lab. It is still **not** an officially documented "rename a site" procedure —
-it is a deliberate, validated composition of two official mechanisms; treat the
-reserves in §6 (especially scale revalidation) as binding before production use.
-
-### 3.5 Exit maintenance and fixup (all variants)
-
-1. Disable maintenance mode:
-   ```bash
-   splunk disable maintenance-mode -auth <admin>:<password>
-   ```
-2. Watch fixup start and progress:
-   ```bash
-   splunk show cluster-status -auth <admin>:<password>
-   splunk list excess-buckets -auth <admin>:<password>
-   ```
-3. Let the cluster converge before declaring the change complete.
-
-## 4. Rollback plan
-
-### 4.1 Decision criteria
-
-Trigger rollback if:
-
-- A reconfigured peer fails to rejoin the cluster and the cause is not a
-  trivial typo correctable in minutes.
-- The cluster reports a persistent `Replication Factor not met` that is
-  not making forward progress over a sustained window.
-- Search results show systematic gaps mapped to the site change (not just
-  transient cold-cache latency).
-- The cluster manager itself becomes unstable after its own restart.
-
-### 4.2 Rollback steps
-
-The reversibility cost depends on the variant.
-
-- **Variant A — Move a peer**. There is no symmetric "un-offline + un-wipe"
-  rollback once step 4 of §3.2 has run on the peer. Rollback before step 4
-  means re-enabling the peer in its original site (its bucket copies are
-  still local). Rollback after step 4 means reprovisioning the peer with
-  `<old_site>` — the data has been redistributed across the original site
-  and will replicate back. Plan the window accordingly.
-- **Variant B — Migrate to multisite**. Rolling back to single-site
-  requires restoring `multisite = false` and the original `[clustering]`
-  block on the manager (restart), and restoring `[general] site` on every
-  peer and search head (restart each). The cluster then re-converges to
-  the single-site bucket layout, which is another fixup cycle.
-- **Variant C — Rename**. Symmetric: re-add `<old_site>` to
-  `available_sites`, revert each peer's `[general] site`, then drop
-  `<new_site>` if no member references it.
-
-Common reversal steps:
-
-1. Re-enable maintenance mode on the cluster manager.
-2. Restore the previous `server.conf` files from the snapshot taken in
-   §3.1, restart the corresponding `splunkd` instances.
-3. Disable maintenance mode and let the cluster converge.
-4. Compare `cluster-status` and bucket counts against the pre-change
-   snapshot.
-
-### 4.3 Point of no return
-
-- Variant A: deleting the index database of a peer (step 4 of §3.2) is
-  the operational point of no return for that peer's local data — the
-  cluster still owns the data through replicated copies on other peers,
-  but the local copy is gone.
-- Variant B: enabling `multisite = true` on the manager is the conceptual
-  point of no return; from that moment, new buckets are created with the
-  multisite RF/SF policy. Reverting is still possible but triggers
-  another fixup cycle.
-- Variant C: removing `<old_site>` from `available_sites` is the point
-  where any member still labelled `<old_site>` is rejected.
+**Point of no return:** there is none that loses data — no peer is wiped and all
+data stays searchable throughout. The relabel is reversible at the cost of
+another short re-convergence.
 
 ## 5. Validation plan
 
-The validation plan must check the **state after fixup has settled**.
+Check the state **after fixup has settled**:
 
-### 5.1 Cluster health
+1. **Continuity (during the change).** Run a probe against the search head for
+   the whole window and require **zero** loss of result completeness — see §8 for
+   the probe design (group by data-source `host`, not by `splunk_server`).
+2. **Cluster health.** `splunk show cluster-status` → `Indexing Ready`, every
+   peer `Up` with its **new** `Site`, `No fixup tasks in progress`.
+3. **Replication & search factors.** `Site replication factor met` **and** `Site
+   search factor met` for all indexes; searchable copies per site match the
+   configured factor (`btool` / `cluster-status` trackers, e.g. `N/N` per site).
+4. **Config.** `available_sites` lists only the new label(s); `site_mappings`
+   present until cleanup, then removed.
+5. **Search path.** A sample search known to target the relabelled peers'
+   data returns complete results in comparable time to baseline.
 
-1. `splunk show cluster-status` reports `Cluster status: Ready` and every
-   peer shows the expected `Site` value.
-2. `splunk list cluster-config` shows the expected `available_sites`, RF
-   and SF values.
-3. No bucket remains in `splunk list excess-buckets` longer than the
-   normal background level seen pre-change.
+**Sign-off** = simultaneously: all peers `Up` with new labels, RF/SF met, no
+persistent fixup, and the continuity probe reported zero interruption.
 
-### 5.2 Replication and search factors
+## 6. Production reservations
 
-1. `Replication Factor met` and `Search Factor met` for **all** indexes.
-2. Bucket counts per site match the expected distribution given the new
-   RF/SF.
-3. A sample search known to target data from the reassigned indexer(s)
-   returns complete results.
+1. **No official "rename a site" procedure.** This method is a deliberate,
+   lab-validated **composition** of two official mechanisms (`splunk offline`,
+   `site_mappings`); it is not a single blessed Splunk procedure. Treat the
+   reserves below as binding before production use.
+2. **Scale and load revalidation.** Validated on a **small** dataset, **one peer
+   per site**, **without concurrent search load** (§8). Re-validate on
+   production-representative bucket counts, peers-per-site and query load before
+   a generalised rollout.
+3. **Topology with ≥2 peers per site.** With more than one peer per site the
+   official *move-a-peer* procedure (offline + wipe + reprovision) becomes cleanly
+   applicable per peer and may be preferable; this composition exists precisely
+   because one-peer-per-site makes the wipe approach impractical.
+4. **Replication policy.** Validated with `site_replication_factor
+   origin:1,total:2` (and equal search factor). The `origin:` constraint is what
+   makes the naïve rename strand buckets; confirm the deployed policy and that
+   `site_mappings` re-homing behaves as expected for it.
+5. **Remove `site_mappings` after convergence** (§2.3). Inert once RF/SF are met,
+   but a lasting source of confusion if left in the manager config.
+6. **Site label convention.** Labels are `site<N>` (`site1`–`site63`). `site0` is
+   **reserved for search heads** (disables search affinity) and must **never**
+   appear in `available_sites`; non-numeric labels (e.g. `site_a`) are rejected;
+   the **manager must sit on a real site**, not `site0`.
+7. **Splunk version.** Behaviour, terminology (`master`/`manager`) and CLI shape
+   changed across versions; the lab used a 9.x release. Match the docs to the
+   deployed version.
+8. **Search head topology.** Standalone SH vs SH cluster vs SHs using
+   `site_search_affinity` each behave differently; preserve SHC captaincy.
+9. **Forwarders.** Indexer discovery vs static `[tcpout]` vs `site_failover`
+   changes how data sources perceive the change.
+10. **Backups / snapshots.** Filesystem snapshots may be unavailable depending on
+    the storage backend — confirm the safety net before the window; this method
+    needs none to be reversible, but it is good practice.
+11. **Change governance.** CAB approval, stakeholder comms and downstream-consumer
+    coordination belong to the change-management process, not this technical plan.
 
-### 5.3 Ingest path
+## 7. References
 
-1. A test event sent through a forwarder reaches the cluster and lands on
-   a peer whose `site` matches the routing expectation.
-2. Forwarders using indexer discovery report a healthy list of peers.
-
-### 5.4 Search path
-
-1. Saved searches and dashboards complete in a comparable time to the
-   pre-change baseline.
-2. If search affinity was changed: confirm via `_internal` that searches
-   dispatched after the change hit the expected peers.
-
-### 5.5 Sign-off criteria
-
-The change is successful when, simultaneously:
-
-- All peers are `Up` with their new site labels.
-- RF and SF are met for all indexes.
-- No persistent fixup activity remains.
-- A representative sample of searches returns complete results.
-
-## 6. Open reservations
-
-These items **must** be clarified against the specific target deployment
-before this plan can be executed. They exist because this fiche is
-intentionally generic.
-
-1. **Variant A — official procedure**. Confirm the exact steps for the
-   deployed Splunk version against the official page:
-   [Move a peer to a new site (Splunk Docs)](https://help.splunk.com/en/splunk-enterprise/administer/manage-indexers-and-indexer-clusters/9.0/manage-a-multisite-indexer-cluster/move-a-peer-to-a-new-site).
-   The official procedure requires `splunk offline` then **deleting the
-   entire Splunk installation including the index database** before
-   reinstalling with the new `site` — a plain `server.conf` edit + restart
-   is explicitly insufficient.
-2. **Variant B — official procedure**. Confirm against the official page:
-   [Migrate an indexer cluster from single-site to multisite (Splunk Docs)](https://help.splunk.com/en/data-management/manage-splunk-enterprise-indexers/10.2/deploy-and-configure-a-multisite-indexer-cluster/migrate-an-indexer-cluster-from-single-site-to-multisite).
-   Verify the toggle that forces existing buckets to adhere to the new
-   multisite RF/SF.
-3. **Variant C — no official procedure, but a lab-validated method exists**.
-   Splunk publishes no dedicated "rename a site" procedure. The **naïve**
-   in-place rename (§3.4.1) is **proven to fail** (search outage + permanently
-   stranded buckets / RF-SF not met, since a bucket's origin site is not
-   re-homable). The **working method** (§3.4.2) composes `splunk offline`
-   (continuity) with `site_mappings` (the official site-decommission re-homing
-   mechanism); it achieved zero outage and full RF/SF reconvergence in a lab on
-   a 1-CM + 2-peer (one per site) + 1-SH cluster, `origin:1,total:2`. It remains
-   a composition, not a blessed procedure — revalidate at production scale and
-   honour reservations §6.16–§6.18 before applying to production.
-4. **Splunk version**. Cluster behaviour, terminology
-   (`master`/`manager`) and CLI shape changed across versions. Match the
-   procedure page to the version actually deployed.
-5. **Variant identification**. Before anything else, confirm which of
-   A / B / C is being executed. The risks, the rollback cost and the
-   point of no return are very different.
-6. **Current `available_sites`, RF and SF values**. The change must keep
-   RF and SF achievable at every point in time during the rolling
-   restart; with too few peers per site, taking one offline can violate
-   `site_replication_factor`.
-7. **Cluster size and bucket count**. Drives the expected fixup duration
-   and the maintenance window length. Variant A's wipe-and-rejoin can
-   move significant data across the cluster.
-8. **Inter-site bandwidth and latency**. Site-aware replication moves
-   data across links you may not have characterized. Confirm the link
-   budget supports the fixup volume.
-9. **Search head topology**. Standalone SH, SH cluster, SHs participating
-   in `site_search_affinity` — each case affects search-head
-   reconfiguration differently, and SHC captaincy must be preserved.
-10. **Forwarder configuration**. Whether forwarders use indexer discovery,
-    static `[tcpout]` server lists, or `site_failover` changes how the
-    change is perceived by data sources.
-11. **Authentication context**. Every CLI command above uses
-    `-auth <admin>:<password>` for clarity. The real procedure should use
-    the authentication mechanism in force (SSO, REST token, mTLS) and
-    must not leave credentials in logs or shell history.
-12. **Monitoring and alerting**. The fixup cycle will fire alerts on
-    cluster health, RF/SF, and per-host I/O. Pre-arrange suppression
-    windows.
-13. **Backups and snapshots**. Confirm whether per-peer filesystem
-    snapshots can be taken before the change as an additional safety net.
-14. **Operational window and approvals**. Change-advisory-board approval,
-    stakeholder communication, downstream-consumer coordination belong to
-    the change governance process, not this technical plan.
-15. **Naming convention for site labels**. Site labels are `site<N>`
-    (`site1`–`site63`); `site0` is **reserved for search heads** (it disables
-    search affinity so the SH searches all sites) and must **never** appear in
-    `available_sites`. Non-numeric labels (e.g. `site_a`) are rejected. A
-    manager must sit on a **real** site (not `site0`).
-16. **Remove `site_mappings` after convergence** (working method, §3.4.2). The
-    `site_mappings` stanza stays in the manager config after the rename; it is
-    inert once RF/SF are met but is a source of confusion and should be removed
-    at the next maintenance window. Verify RF/SF stay met after removal.
-17. **Transient under-replication window**. During each peer's `offline`→
-    rename→`start`, the cluster is briefly below its replication factor for that
-    peer's buckets (fault tolerance is momentarily reduced even though search
-    stays complete via the surviving copy). Size the window against the per-peer
-    restart time; avoid overlapping with other risk.
-18. **Scale and load revalidation**. The working method was validated on a
-    **small** dataset, **one peer per site**, and **without concurrent search
-    load**. Re-validate on production-representative bucket counts, peers-per-site
-    and query load before generalised rollout. With ≥2 peers per site, the
-    official Variant A (move-a-peer, §3.2) becomes cleanly applicable and may be
-    preferable.
-
-## References
-
-- Splunk Docs — Move a peer to a new site:
-  <https://help.splunk.com/en/splunk-enterprise/administer/manage-indexers-and-indexer-clusters/9.0/manage-a-multisite-indexer-cluster/move-a-peer-to-a-new-site>
-- Splunk Docs — Migrate an indexer cluster from single-site to multisite:
-  <https://help.splunk.com/en/data-management/manage-splunk-enterprise-indexers/10.2/deploy-and-configure-a-multisite-indexer-cluster/migrate-an-indexer-cluster-from-single-site-to-multisite>
+- Splunk Docs — Decommission a site (source of the `site_mappings` mechanism):
+  <https://docs.splunk.com/Documentation/Splunk/9.4.1/Indexer/Decommissionasite>
 - Splunk Docs — Multisite indexer cluster architecture:
   <https://docs.splunk.com/Documentation/Splunk/9.4.1/Indexer/Multisitearchitecture>
-- Splunk Docs — Decommission a site (source of the `site_mappings` mechanism used
-  by the Variant C working method, §3.4.2):
-  <https://docs.splunk.com/Documentation/Splunk/9.4.1/Indexer/Decommissionasite>
 - Splunk Docs — Use maintenance mode:
   <https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Usemaintenancemode>
+- Splunk Docs — Move a peer to a new site (the out-of-scope *move* operation):
+  <https://help.splunk.com/en/splunk-enterprise/administer/manage-indexers-and-indexer-clusters/9.0/manage-a-multisite-indexer-cluster/move-a-peer-to-a-new-site>
 - See also: [ITIL change governance](../methodologies/itil-gouvernance-changement.md)
   for the surrounding change-management process.
+
+---
+
+## 8. Experiment results (lab validation)
+
+This method was not assumed — it was derived from a controlled lab experiment.
+The record below is what justifies the procedure above.
+
+**Test bed.** A minimal multisite cluster: 1 cluster manager + 2 indexer peers
+(**one peer per site**) + 1 search head, Splunk 9.x, `site_replication_factor =
+site_search_factor = origin:1,total:2`, search head on `site0`. Goal: rename the
+two indexer sites (`<old1>,<old2>` → `<new1>,<new2>`) with **zero search
+interruption** and RF/SF re-met at the end.
+
+**Continuity probe.** A script polled the search head every 2 s for the whole
+window, grouping `index=_internal` **by data-source `host`** (the two peers as
+event producers) rather than by `splunk_server` (the indexer that answers). This
+is the key measurement choice: while a peer restarts, the number of answering
+`splunk_server` legitimately drops to 1 — that is **not** an outage. An outage is
+a **`host` disappearing** from results, i.e. that peer's data no longer served by
+a cross-site copy. The probe logged per-tick availability; a run "passes" only
+with **zero** ticks losing a `host`.
+
+**Runs.**
+
+| # | Method tried | Search continuity | RF/SF after | Acceptable? |
+|---|---|---|---|---|
+| 1 | plain `systemctl restart`, maintenance mode on, **hot** buckets | FAIL — multi-second outages during each peer restart | not met | no |
+| 2A | prolonged peer stop, maintenance mode on, **warm** buckets | FAIL — ~6 s gap at primary reassignment | not met | no |
+| 2B | **`splunk offline`**, maintenance mode off, warm | **PASS — 0 outage** | not met | no |
+| 3 | `splunk offline` + "wait for RF/SF met after each step" gate | FAIL — outage on one peer; **gate timed out** | not met (structural) | no |
+| 4 | **`splunk offline` + `site_mappings`** | **PASS — 0 outage** | **MET** | **yes** |
+
+**What each run established.**
+
+- The long outages of run 1 were caused by **hot (not-yet-replicated) buckets**,
+  not by maintenance mode — with warm buckets the surviving copy does serve
+  (runs 2A/2B). Hence the "all buckets warm and replicated" precondition (§2.1).
+- A **plain restart** does not hand primaries off; **`splunk offline`** does,
+  eliminating the search gap (run 2B = 0 outage).
+- The replication-factor failure is **structural and independent of the shutdown
+  method**: a bucket's **origin site is not re-homable** directly. Run 3 proved
+  it — after renaming a single peer, the manager reports `No fixup tasks in
+  progress` *while* RF/SF stay not met, and a per-step RF/SF gate simply times
+  out.
+- **`site_mappings`** (the site-decommission mechanism) supplies the missing
+  signal to re-home the origin copies. Run 4 combined it with `splunk offline`
+  and achieved **both** zero outage **and** full RF/SF reconvergence (immediate
+  for the first peer, ~1 minute for the second), with no wipe and no data loss
+  (`All data is searchable` throughout).
+
+**Independent audit.** Run 4 was re-verified by an independent reviewer who
+re-derived the result from the raw probe log (0/406 ticks lost a `host` →
+100% availability) and from a live cluster query (`Site replication/search
+factor met`, searchable copies `N/N` per site, `site_mappings` and
+`available_sites` as expected). Verdict: method validated, no blocking
+anomalies; the production reserves of §6 were raised by that audit.
