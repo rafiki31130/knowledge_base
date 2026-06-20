@@ -417,6 +417,22 @@ with **zero** ticks losing a `host`.
   several times rather than rebuilt clean; the residual sub-5-second transient may
   be an artefact of that non-pristine state — the one-peer-per-site run 4 measured
   exactly zero.)
+- A final run made the maintenance-mode cost unmistakable by holding it on for the
+  **entire** rename (enable once at the start, both sites relabelled under it, a
+  single disable at the very end). With two peers per site this is the **worst**
+  result of the whole series by a wide margin (~165 s of outage, vs ~4 s with no
+  maintenance mode and ~26 s with it toggled per-site). Two effects compound: (1)
+  while both peers of the *second* site are down under maintenance mode, the
+  manager will not promote the surviving cross-site replica to a searchable
+  primary — so that host's data is unsearchable for the **whole** time maintenance
+  mode stays on, not just during the restart; and (2) `splunk offline` on the
+  second peer cannot finish its graceful decommission under maintenance mode and
+  runs all the way to its force-timeout (`decommission_node_force_timeout`, ~5 min),
+  stretching the gap further. The lesson is now quantitative: **the outage caused by
+  maintenance mode is roughly proportional to how long it stays enabled** — never <
+  per-site toggle < continuous. The only combination that approaches zero is
+  `splunk offline` with **no maintenance mode at all** (§2.2), and it holds from one
+  to two peers per site.
 
 **Independent audit.** Run 4 was re-verified by an independent reviewer who
 re-derived the result from the raw probe log (0/406 ticks lost a `host` →
