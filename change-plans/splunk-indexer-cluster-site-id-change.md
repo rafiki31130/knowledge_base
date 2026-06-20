@@ -378,6 +378,14 @@ with **zero** ticks losing a `host`.
   reassignment**. RF/SF do reconverge once maintenance mode is disabled, but the
   search gap during the change makes it strictly worse than run 4 (0 outage, no
   maintenance mode). → **do not use maintenance mode for this rename** (§2.2).
+- An 8th run replaced `splunk offline` with a plain `splunk stop` (hard stop) —
+  toggling maintenance mode off between the two peers to let the manager settle.
+  It **fails too** (~54 s of outage, ~24–30 s per peer): a hard stop drops the
+  peer **without** the manager reassigning its primaries first, so its data is
+  unsearchable for the whole restart. The maintenance-mode toggle changed nothing.
+  This is the converse confirmation of run 4: **the graceful `splunk offline` —
+  which reassigns primaries before the peer stops — is the single feature that
+  makes the rename zero-outage. `splunk stop`/`systemctl stop` must not be used.**
 
 **Independent audit.** Run 4 was re-verified by an independent reviewer who
 re-derived the result from the raw probe log (0/406 ticks lost a `host` →
