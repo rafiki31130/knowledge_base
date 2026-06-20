@@ -255,12 +255,33 @@ cause is not a trivial typo), RF/SF make no forward progress over a sustained
 window, search shows systematic gaps mapped to the change, or the manager is
 unstable after its restart.
 
-**Steps** (symmetric to §2): re-add `<old_site>` to `available_sites`, revert
-each peer's `[general] site` (graceful `splunk offline` → edit → `start`), and
-remove the `<old_site>:<new_site>` entry from `site_mappings`; or restore the
-`server.conf` files from the §2.1 snapshot and restart the affected `splunkd`
-instances. Let the cluster re-converge and compare `cluster-status` + bucket
-counts against the pre-change snapshot.
+**Rollback is the same method with `<old_site>` and `<new_site>` swapped** — run
+§2.2 in reverse. Step overview:
+
+| # | Node | What changes | `server.conf` stanza / key | Action |
+|---|------|--------------|----------------------------|--------|
+| R1 | **Manager** | Re-open the old label **and** drop the forward mapping (one edit) | `[clustering] available_sites`, `[clustering] site_mappings` | restart manager |
+| R2 | **Each new-site peer**, one at a time | Relabel the peer back | `[general] site` | `splunk offline` → edit → start |
+| R3 | **Manager** (single restart) | Drop the new label + add the reverse mapping | `[clustering] available_sites`, `[clustering] site_mappings` (+ `[general] site`) | restart manager |
+| R4 | **Manager** | Verify against the pre-change snapshot | — (read-only) | poll `cluster-status` |
+
+The one subtlety is **R1**: you must *remove* the forward `site_mappings =
+<old_site>:<new_site>` in the **same** edit that re-adds `<old_site>` to
+`available_sites` — a mapping's source site may not be listed in `available_sites`
+(the same constraint as step 3, in reverse). Target — `$CONF` on the **manager**:
+```ini
+[clustering]
+available_sites = <old_site>,<new_site>      ; CHANGED: was `<new_site>` — re-add the old label
+; site_mappings = <old_site>:<new_site>      ; REMOVED — delete the forward mapping in this same edit
+```
+Then R2 reverts each peer's `[general] site` back to `<old_site>` (graceful
+`offline` → edit → `start`, one at a time), and R3 mirrors step 3 with the
+**reverse** mapping (`available_sites = <old_site>`, `site_mappings =
+<new_site>:<old_site>`). Let the cluster re-converge and compare `cluster-status`
++ bucket counts against the pre-change snapshot.
+
+**Shortcut:** restoring the `server.conf` files from the §2.1 snapshot and
+restarting the affected `splunkd` instances achieves the same end state.
 
 **Point of no return:** there is none that loses data — no peer is wiped and all
 data stays searchable throughout. The relabel is reversible at the cost of

@@ -37,9 +37,12 @@ Every fiche follows the same skeleton, in this order:
    own context.
 2. **Risks and service interruption** — what can go wrong, what is degraded
    during the change, expected user-visible impact.
-3. **Change plan** — ordered, verifiable steps to execute the change.
+3. **Change plan** — ordered, verifiable steps to execute the change. Open it
+   with a **step-overview table** (see Conventions below), then one block per
+   step.
 4. **Rollback plan** — how to return to the pre-change state, with the
-   decision criteria for triggering rollback.
+   decision criteria for triggering rollback. Same shape as the change plan:
+   a step-overview table, then config-first steps.
 5. **Validation plan** — checks that prove the new state is healthy, ideally
    distinct from the checks already done inside the change steps.
 6. **Open reservations** — items the reader **must** clarify before running
@@ -57,8 +60,20 @@ prevents readers from treating the fiche as a copy-paste runbook.
   (`splunk-indexer-cluster-site-id-change.md`).
 - Placeholders use angle brackets: `<old_site>`, `<cluster-manager-host>`,
   `<rf>`, `<sf>`.
-- Commands shown with the vendor CLI (`splunk`, `kubectl`, `psql`…) in
-  fenced code blocks, annotated with the language tag.
+- **Step-overview table first.** Every change plan and rollback plan opens with a
+  short table the reader can grasp before reading any detail — one row per step,
+  columns: `#` · node/component · what changes · config file/stanza touched ·
+  action (restart, run X…). The reader sees the whole sequence at a glance, then
+  drops into the per-step detail.
+- **Config-first, commands second.** Express each step as the **target
+  configuration** — show the config file/stanza with the lines to set and an
+  inline annotation (`CHANGED` / `ADDED` / `REMOVED` / `unchanged`, with the old
+  value noted), so the reader knows the desired end state independently of any
+  tool. Commands (CLI, `sed`, config-management) are how you *apply* that state and
+  come after, kept minimal. Reserve full command blocks for genuine actions that
+  aren't config (graceful shutdowns, restarts, verification queries).
+- When a step edits a file that also holds a secret, the plan must say to touch
+  **only** the lines shown and never rewrite the secret-bearing stanza wholesale.
 - Vendor documentation links use the full HTTPS URL (no internal redirects).
 
 ## Existing change plans
