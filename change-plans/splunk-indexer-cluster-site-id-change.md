@@ -386,6 +386,19 @@ with **zero** ticks losing a `host`.
   This is the converse confirmation of run 4: **the graceful `splunk offline` —
   which reassigns primaries before the peer stops — is the single feature that
   makes the rename zero-outage. `splunk stop`/`systemctl stop` must not be used.**
+- A 9th run tested whether **two peers per site** rescues the hard-stop approach:
+  same `splunk stop` + maintenance-mode method, but on a topology with two peers
+  in each site (`origin:2,total:3`), processing one site at a time and stopping
+  **both** of that site's peers together while the manager was reconfigured. It
+  **still fails** (~22 s of outage, both same-site peers absent from search
+  together during each stop/restart window). Intra-site redundancy does **not**
+  help here: a hard stop of *both* peers of a site removes that site's only
+  searchable copies of any bucket whose other copy had not yet been promoted
+  elsewhere, and there is no surviving same-site peer to serve it. RF/SF
+  reconverge afterwards, but the objective (zero outage) is missed. This
+  reinforces the §6.3 reservation: more peers per site only helps if you move
+  them **one at a time with `splunk offline`**, never by hard-stopping a whole
+  site at once.
 
 **Independent audit.** Run 4 was re-verified by an independent reviewer who
 re-derived the result from the raw probe log (0/406 ticks lost a `host` →
