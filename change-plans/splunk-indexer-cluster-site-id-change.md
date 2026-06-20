@@ -89,70 +89,92 @@ Each failure is addressed with the matching official mechanism:
 ### 2.2 Procedure (runbook)
 
 Rename `<old_site>` → `<new_site>` (repeat the mapping for each site being
-renamed). The commands below are the **actual operations** validated in lab,
-with generic placeholders. `$CONF` = `$SPLUNK_HOME/etc/system/local/server.conf`
-on the node being edited.
+renamed). Every change is an edit to one `server.conf` stanza plus a restart or a
+graceful `offline`. `$CONF` = `$SPLUNK_HOME/etc/system/local/server.conf` on the
+node being edited.
+
+#### Step overview (read this first)
+
+| # | Node | What changes | `server.conf` stanza / key | Action |
+|---|------|--------------|----------------------------|--------|
+| 1 | **Manager** | Declare the new label (old + new coexist) | `[clustering] available_sites` | restart manager |
+| 2 | **Each old-site peer**, one at a time | Relabel the peer to the new site | `[general] site` | `splunk offline` → edit → start |
+| 3 | **Manager** (single restart) | Drop the old label **and** add the mapping (+ relabel the manager if it sat on a renamed site) | `[clustering] available_sites`, `[clustering] site_mappings` (+ `[general] site`) | restart manager |
+| 4 | **Manager** | Verify convergence | — (read-only) | poll `cluster-status` |
+| 5 | **Manager** (cleanup, later — §2.3) | Remove the now-inert mapping | `[clustering] site_mappings` | restart manager |
+
+The exact target config for each step is shown below. **Only ever change the
+lines shown** — see the editing/secret note before you start.
 
 > **Do NOT enable maintenance mode for this rename** (proven counter-productive
-> in lab — §8, Run 7). `splunk offline` works by having the **manager reassign the
-> peer's primary copies to the surviving peers before the peer stops** — but
-> maintenance mode **suspends exactly that reassignment**. With maintenance mode
-> on, the renamed peer's data drops out of search during the change (multi-second
-> gaps; `splunk offline` may even hit its decommission force-timeout), whereas
-> **without** maintenance mode continuity is preserved and the manager
-> re-replicates normally. Maintenance mode buys nothing here and breaks the one
-> guarantee the method relies on.
+> in lab — §8, Runs 7/11/13). `splunk offline` works by having the **manager
+> reassign the peer's primary copies to the surviving peers before the peer
+> stops** — but maintenance mode **suspends exactly that reassignment**. With it
+> on, the renamed peer's data drops out of search during the change (tens of
+> seconds, the worse the longer it stays on; `splunk offline` may even hit its
+> decommission force-timeout). Maintenance mode buys nothing here and breaks the
+> one guarantee the method relies on.
 
-> **Secret & auth handling (do this on every step).** The cluster `pass4SymmKey`
-> lives in `[clustering]` of `server.conf`. **Never rewrite the whole stanza**
-> (that would force you to re-inject the secret) — edit **only** the one line you
-> need with a targeted `sed`, leaving `pass4SymmKey` untouched. **Never** pass
-> credentials in `argv` (`-auth user:pass`): authenticate the CLI via environment
-> variables supplied on stdin, e.g.
-> `printf 'export SPLUNK_USERNAME=admin\nexport SPLUNK_PASSWORD=%s\n<cmd>\n' "$PW" | bash -s`,
+> **Editing config safely + auth.** `server.conf` `[clustering]` also holds the
+> cluster `pass4SymmKey`. **Change only the specific lines highlighted in each
+> step; never rewrite the `[clustering]` stanza wholesale** (that would force you
+> to re-inject the secret). A targeted, single-line edit (`sed -i
+> 's/^available_sites = .*/.../'`, or your config-management tool) is the safe way
+> to apply the target values shown. For the CLI, **never** pass credentials in
+> `argv` (`-auth user:pass`): authenticate via environment variables fed on stdin,
+> e.g. `printf 'export SPLUNK_USERNAME=admin\nexport SPLUNK_PASSWORD=%s\nsplunk offline\n' "$PW" | bash -s`,
 > with `$PW` read once from your secret store.
 
-**1. Manager — declare the new site(s).** Add the new label(s) so old and new
-coexist; the manager is not in the data path, so its restart does not interrupt
-search.
-```bash
-sed -i 's/^available_sites = .*/available_sites = <old_site>,<new_site>/' "$CONF"
-systemctl restart Splunkd            # or: splunk restart, per your service setup
-splunk btool server list clustering | grep -E 'available_sites'   # verify
-```
+**Step 1 — Manager: declare the new site(s).** Old and new labels coexist so the
+peers can re-register under the new one in step 2. The manager is not in the data
+path, so its restart does not interrupt search.
 
-**2. Each peer carrying `<old_site>` — sequentially, never in parallel.** Graceful
-offline → relabel → start; confirm the peer is back `Up`/`Searchable` before the
-next one.
-```bash
-# graceful decommission: manager reassigns THIS peer's primaries to the surviving
-# peer BEFORE splunkd stops → search stays complete. Plain offline, NOT --enforce-counts.
-printf 'export SPLUNK_USERNAME=admin\nexport SPLUNK_PASSWORD=%s\nsplunk offline\n' "$PW" | bash -s
-# once splunkd has stopped, relabel only the [general] site line, then start:
-sed -i 's/^site = .*/site = <new_site>/' "$CONF"
-systemctl start Splunkd
-# verify before moving on:  cluster-status shows this peer Up, Searchable, site=<new_site>
+Target — `$CONF` on the **manager**:
+```ini
+[clustering]
+available_sites = <old_site>,<new_site>     ; CHANGED: was `<old_site>` — add the new label, keep the old
+; mode = manager                             ; unchanged
+; site_replication_factor / site_search_factor / pass4SymmKey  — unchanged
 ```
+Then restart the manager. Verify: `splunk btool server list clustering | grep available_sites`.
 
-**3. Manager — map + trim, in the SAME restart.** Drop the old label(s) from
-`available_sites` **and** add the `site_mappings`, in one edit/restart (the order
-is forced — see box below). If the manager itself sat on a renamed site, relabel
-its `[general] site` too.
-```bash
-sed -i 's/^available_sites = .*/available_sites = <new_site>/' "$CONF"
-sed -i '/^\[clustering\]/a site_mappings = <old_site>:<new_site>' "$CONF"  # comma-separate multiple maps
-sed -i 's/^site = .*/site = <new_site>/' "$CONF"        # only if the manager was on a renamed site
-systemctl restart Splunkd
-# RF/SF re-converge as the origin copies re-home to the new site
-# (observed: seconds to ~1 minute on a small cluster).
-```
+**Step 2 — Each peer on `<old_site>`, sequentially (never in parallel).** Graceful
+`offline` → relabel → start; confirm the peer is back `Up` / `Searchable` on the
+new site before doing the next one.
 
-**4. Verify convergence.** Poll until met:
-```bash
-splunk show cluster-status --verbose
-# expect: Site replication factor met YES, Site search factor met YES,
-#         all peers Up with their NEW site, searchable copies N/N per site, No fixup.
+1. `splunk offline` — **plain, not `--enforce-counts`.** The manager reassigns this
+   peer's primaries to the surviving peer **before** splunkd stops, so search stays
+   complete across the down window.
+2. Once splunkd has stopped, set the peer's site. Target — `$CONF` on **that peer**:
+   ```ini
+   [general]
+   site = <new_site>                          ; CHANGED: was `<old_site>`
+   ```
+3. Start splunkd. Confirm in `cluster-status`: this peer `Up`, `Searchable`,
+   `site=<new_site>`, before moving to the next peer.
+
+**Step 3 — Manager: map + trim, in ONE restart.** Drop the old label(s) from
+`available_sites` **and** add the `site_mappings` in a single edit/restart (the
+order is forced — see box below). If the manager itself sat on a renamed site,
+relabel its `[general] site` in the same edit.
+
+Target — `$CONF` on the **manager**:
+```ini
+[general]
+site = <new_site>                            ; CHANGED — ONLY if the manager was on a renamed site
+
+[clustering]
+available_sites = <new_site>                 ; CHANGED: was `<old_site>,<new_site>` — drop the old label(s)
+site_mappings = <old_site>:<new_site>        ; ADDED — comma-separate multiple maps, e.g. `<old1>:<new1>,<old2>:<new2>`
+; pass4SymmKey, mode, *_factor                — unchanged
 ```
+Then restart the manager **once**. RF/SF re-converge as the origin copies re-home
+to the new site (observed: seconds to ~1 minute on a small cluster; expect a brief
+per-host re-homing transient with ≥2 peers/site — see §6 reservation 3).
+
+**Step 4 — Verify convergence.** Poll `splunk show cluster-status --verbose` until:
+`Site replication factor met YES`, `Site search factor met YES`, all peers `Up`
+on their **new** site, searchable copies `N/N` per site, `No fixup tasks`.
 
 > **Why the step-3 order is the *only* valid one.** Three Splunk constraints,
 > each verified empirically (§8), box you into the sequence above:
@@ -181,12 +203,20 @@ that is in `available_sites` (relabel its `[general] site` in step 3 if it was o
 renamed one). A search head set to `site0` (search-affinity disabled) needs **no**
 change — `site0` is reserved for search heads and never appears in `available_sites`.
 
-### 2.3 Cleanup
+### 2.3 Cleanup (step 5)
 
-Once `cluster-status` shows RF/SF met and stable, the `site_mappings` stanza is
+Once `cluster-status` shows RF/SF met and stable, the `site_mappings` line is
 **inert but should be removed** at the next maintenance window to avoid future
-confusion (§6 reservation 5). Verify RF/SF stay met after removing it and
-restarting the manager.
+confusion (§6 reservation 5).
+
+Target — `$CONF` on the **manager**:
+```ini
+[clustering]
+available_sites = <new_site>                 ; unchanged
+; site_mappings = <old_site>:<new_site>      ; REMOVED — delete this line entirely
+; pass4SymmKey, mode, *_factor                — unchanged
+```
+Then restart the manager and confirm RF/SF stay met (`cluster-status`).
 
 ## 3. Risks and service interruption
 
