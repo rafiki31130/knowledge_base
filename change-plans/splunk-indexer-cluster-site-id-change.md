@@ -449,7 +449,7 @@ down together each time — the adversarial choice):
 > An intervening attempt (between runs 8 and 10) produced no usable continuity
 > measurement and is omitted. Series B figures are availability over the full
 > rename window; "ticks" are 2 s probe samples that lost a `host`.
-
+********
 **What each run established.**
 
 - The long outages of run 1 were caused by **hot (not-yet-replicated) buckets**,
