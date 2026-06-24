@@ -559,6 +559,21 @@ down together each time — the adversarial choice):
   belongs to the **one-peer-per-site** topology (run 4). The shutdown windows
   themselves stay clean throughout; the gap is a transient fixup, not a hard outage.
   This refines reservation §6.3.
+- **Naïve "support/vendor" procedure — quantified worst case (anti-pattern).** A
+  separately-sourced rename procedure — *edit `[general] site` on every node and
+  restart the service; no `splunk offline`, no maintenance mode, no `site_mappings`;
+  swap `available_sites` to the new labels only at the very end* — was tested verbatim
+  on the two-peers-per-site bed (rolling `systemctl restart` of each peer, then the
+  manager). It is the **worst result on record: ~43% search availability** (a single
+  outage window of ~4.5 minutes, collapsing at its trough to **one** searchable host)
+  **and** RF/SF left **not met** with `No fixup` (stranded buckets). It compounds all
+  three failure modes above at once: (1) a plain restart drops the peer's primaries
+  with no hand-off (runs 1/8); (2) renaming a peer to a label **not yet** in
+  `available_sites` gets it **ejected at heartbeat** and its data drops out (run 6);
+  (3) no `site_mappings` strands the origin copies so RF/SF never reconverges (runs
+  1-3). Such guidance also tends to misplace `server.conf` (it lives in
+  `$SPLUNK_HOME/etc/system/local/`, not under `etc/auth/`). **Any "just edit the site
+  and restart" advice is unsafe — use the §2 method.**
 
 **Independent audit.** Run 4 was re-verified by an independent reviewer who
 re-derived the result from the raw probe log (0/406 ticks lost a `host` →
