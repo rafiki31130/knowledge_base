@@ -438,14 +438,13 @@ below are availability % and the count of lost ticks / wall-clock gap.
 **Series B — two peers per site** (`origin:2,total:3`; both same-site peers taken
 down together each time — the adversarial choice):
 
-| # | Method tried | Search continuity | RF/SF after | Acceptable? |
-|---|---|---|---|---|
-| 10 | **`splunk stop`** (hard) + maintenance mode "sandwich" (per-site) | FAIL — 98.79%, 11 ticks / ~22 s | met | no — `stop` strands same-site copies |
-| 11 | **`splunk offline`** + maintenance mode "sandwich" (per-site) | FAIL — 96.57%, 13 ticks / ~26 s, **all after MM disable** | met | no — MM defers the fixup |
-| 12 | **`splunk offline`, no maintenance mode** (= run 4 generalised) | **~PASS — 99.35%, 2 ticks / ~4 s** (re-homing transient) | met | near — best of series B |
-| 13 | `splunk offline` + maintenance mode **continuous** (whole rename) | FAIL — 79.05%, 84 ticks / ~165 s | met | no — **worst of the `offline` variants**, MM held throughout |
-| 14 | run 12 re-run on a **clean rebuild** (control) | FAIL strict — 95.40%, 12 ticks / ~26 s (inherent re-homing residue) | met | no strict zero, but the method of choice |
-| 15 | **naïve "support" procedure**: rename `[general] site` + plain `restart` per node, **no `offline`, no MM, no `site_mappings`**, `available_sites` swapped only at the end | **FAIL — 43.17%, 129 ticks / ~4.5 min** (trough: **1** searchable host) | **not met** + `No fixup` (stranded) | no — **worst overall**; compounds all three failure modes |
+| #   | Method tried                                                      | Search continuity                                                   | RF/SF after | Acceptable?                              |
+| --- | ----------------------------------------------------------------- | ------------------------------------------------------------------- | ----------- | ---------------------------------------- |
+| 10  | **`splunk stop`** (hard) + maintenance mode "sandwich" (per-site) | FAIL — 98.79%, 11 ticks / ~22 s                                     | met         | no — `stop` strands same-site copies     |
+| 11  | **`splunk offline`** + maintenance mode "sandwich" (per-site)     | FAIL — 96.57%, 13 ticks / ~26 s, **all after MM disable**           | met         | no — MM defers the fixup                 |
+| 12  | **`splunk offline`, no maintenance mode** (= run 4 generalised)   | **~PASS — 99.35%, 2 ticks / ~4 s** (re-homing transient)            | met         | near — best of series B                  |
+| 13  | `splunk offline` + maintenance mode **continuous** (whole rename) | FAIL — 79.05%, 84 ticks / ~165 s                                    | met         | no — **worst run**, MM held throughout   |
+| 14  | run 12 re-run on a **clean rebuild** (control)                    | FAIL strict — 95.40%, 12 ticks / ~26 s (inherent re-homing residue) | met         | no strict zero, but the method of choice |
 
 > An intervening attempt (between runs 8 and 10) produced no usable continuity
 > measurement and is omitted. Series B figures are availability over the full
