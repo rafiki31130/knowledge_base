@@ -1,0 +1,13 @@
+[
+  {
+    "Pattern": "^index\\s*=.*$",
+    "Replacement": "index = prod_main",
+    "IgnoreCase": false,
+    "Multiline": true
+  },
+  {
+    "Pattern": "old-splunk-host\\.corp\\.example",
+    "Replacement": "new-splunk-host.corp.example",
+    "IgnoreCase": true
+  }
+]

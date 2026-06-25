@@ -32,6 +32,7 @@ elle n'a pas sa place ici. Anonymiser ou reformuler.
 - [`cheat-sheets/`](./cheat-sheets) — Aide-mémoire commandes par techno.
 - [`handbooks/`](./handbooks) — Handbooks thématiques (livres Markdown) pour un profil de lecteur ciblé. Voir [`handbooks/README.md`](./handbooks/README.md) pour la structure d'un handbook.
 - [`change-plans/`](./change-plans) — Templates génériques de change plans (description, risques, plan, rollback, validation, réserves). Rédigés en anglais.
+- [`scripts/`](./scripts) — Scripts utilitaires génériques et réutilisables (un sous-dossier par script, avec README + schéma).
 
 ## Workflow
 

@@ -65,5 +65,6 @@ knowledge_base/
 ├── splunk/          — concepts, SPL, recherches génériques
 ├── methodologies/   — méthodes d'investigation, frameworks
 ├── concepts/        — transverse : logs, regex, réseau…
-└── cheat-sheets/    — aide-mémoire commandes par techno
+├── cheat-sheets/    — aide-mémoire commandes par techno
+└── scripts/         — scripts utilitaires génériques (1 sous-dossier/script + schéma)
 ```
