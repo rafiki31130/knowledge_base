@@ -23,3 +23,4 @@ Chaque fiche reste générique et publiable.
 - [Temps dans les logs : timezones, epoch, drift d'horloge](./temps-dans-les-logs.md)
 - [Encodages à reconnaître et décoder : base64, URL, hex](./encodages-courants.md)
 - [Identités dans les logs : SID, UPN, sAMAccountName, notions OIDC](./identites-dans-les-logs.md)
+- [Git : modèle mental, vocabulaire et principes (HEAD, tree, worktree, prune…)](./git-modele-mental.md)
