@@ -13,6 +13,9 @@
 > cgroupsv2). Quand la divergence porte sur la documentation officielle
 > Splunk 9.4, la source documentaire est citée.
 
+
+```table-of-contents
+```
 ## Comment lire un finding
 
 Chaque finding suit la même structure :
