@@ -82,6 +82,44 @@ flowchart LR
 > `git status` se lit comme un diff entre ces zones : « Changes to be committed »
 > = index vs dernier commit ; « Changes not staged » = working tree vs index.
 
+### Pourquoi l'index est obligatoire — et utile même sans commit immédiat
+
+Un commit n'est **pas** « l'état de mon disque maintenant » : c'est un tree figé,
+construit **à partir de l'index**. L'index est donc la **source de vérité de ce
+qui sera gravé** — `git commit` photographie l'index, jamais le working tree
+directement. C'est pour ça qu'il est incontournable : *c'est lui qu'on
+développe*. (`git commit -a` ne le saute pas — il fait juste le `git add` des
+fichiers **déjà suivis** à ta place avant de commiter ; un fichier **nouveau**
+échappe à `-a` et exige un `add` explicite.)
+
+Cette séparation working tree / index, loin d'être une formalité, est un **espace
+de composition** :
+
+- **Découper un working tree en désordre en commits propres.** 5 fichiers modifiés
+  pour 2 sujets ? On indexe les 3 fichiers du sujet A → commit « fix A », puis les
+  2 autres → commit « feat B ». Sans index, tout partirait dans un seul commit
+  fourre-tout.
+- **Indexer une partie d'un fichier** (`git add -p`) : un même fichier peut avoir
+  des lignes indexées (dans le prochain commit) **et** des lignes non indexées
+  (gardées pour plus tard).
+- **Relire avant de graver** : `git diff --staged` montre exactement ce qui
+  partira.
+
+Point qui surprend : **l'index mémorise une *version*, pas une simple intention.**
+
+```text
+git add fichier.txt    # l'index retient le CONTENU de fichier.txt à cet instant
+# ... on ré-édite fichier.txt ...
+git commit             # commite la version AU MOMENT DU add, pas la version actuelle du disque
+```
+
+`git status` affiche alors le fichier **à la fois** en « staged » (version add-ée)
+et en « not staged » (modifs faites après) — preuve que l'index est un **vrai
+troisième stockage**, avec sa propre copie du contenu, et pas un drapeau
+« fichier prêt ». Analogie : l'index est le **panier de courses** ; le working
+tree est le magasin ; le commit est le passage en caisse — seul ce qu'on a mis
+dans le panier est acheté.
+
 ## HEAD, branches et refs : des pointeurs, rien de plus
 
 C'est le cœur du modèle mental. Une **branche n'est pas un dossier de commits** :
@@ -212,6 +250,140 @@ flowchart TB
   précaution (`--force-with-lease`).
 
 Règle d'or : **rebase ce qui est local et privé, merge ce qui est public.**
+
+## Les actes de correction : annuler, réécrire, réparer
+
+Presque toute correction se ramène à **deux gestes seulement** :
+
+1. **Déplacer un pointeur** (HEAD, une branche) vers un autre commit — sans rien
+   créer. Rapide, mais peut « abandonner » des commits (récupérables via reflog).
+2. **Créer un nouveau commit** qui exprime la correction — l'historique grossit
+   mais rien n'est réécrit. Sûr, partageable.
+
+La distinction clé qui pilote le choix : **le commit fautif est-il déjà
+poussé/partagé ?** Si oui → privilégier le geste **additif** (revert), car
+réécrire un historique public casse celui des autres. Si non → réécrire librement.
+
+```mermaid
+flowchart TD
+    Q{Le commit est-il<br/>déjà partagé / poussé ?}
+    Q -->|Oui| ADD["Geste ADDITIF<br/>git revert<br/>(nouveau commit qui inverse)"]
+    Q -->|Non| REW{Quoi corriger ?}
+    REW -->|Le dernier commit<br/>message ou contenu| AMEND["git commit --amend"]
+    REW -->|Remonter de N commits| RESET["git reset --soft/--mixed/--hard"]
+    REW -->|Récupérer 1 commit<br/>d'ailleurs| PICK["git cherry-pick"]
+```
+
+### reset : déplacer la branche, avec 3 niveaux d'effet sur les zones
+
+`git reset <cible>` **déplace la branche courante** (et HEAD avec elle) vers
+`<cible>`. La nuance — l'erreur classique — est ce qu'il fait des **trois zones** :
+
+| Mode | Déplace la branche | Index | Working tree | Usage typique |
+|---|---|---|---|---|
+| `--soft` | ✅ | inchangé (modifs **restent indexées**) | inchangé | regrouper / refaire le dernier commit en gardant tout prêt |
+| `--mixed` *(défaut)* | ✅ | réinitialisé (modifs **désindexées**) | inchangé | « décommiter » et ré-choisir ce qu'on indexe |
+| `--hard` | ✅ | réinitialisé | **écrasé** (modifs **perdues**) | jeter tout et revenir à un état propre — **destructif** |
+
+```mermaid
+flowchart LR
+    subgraph soft["reset --soft HEAD~1"]
+        s["commit défait<br/>→ tout reste dans l'index"]
+    end
+    subgraph mixed["reset --mixed HEAD~1"]
+        m["commit défait<br/>→ modifs dans le working tree, désindexées"]
+    end
+    subgraph hard["reset --hard HEAD~1"]
+        h["commit défait<br/>→ modifs SUPPRIMÉES du disque"]
+    end
+```
+
+> Mémo : `--soft` garde le plus (index + wt), `--hard` garde le moins (rien).
+> `--mixed` est entre les deux. Seul `--hard` touche tes fichiers sur disque.
+
+### Corriger HEAD : detached HEAD et déplacements
+
+« Corriger HEAD » recouvre deux situations concrètes :
+
+- **Sortir d'un detached HEAD** (cf. section HEAD) : on a checkout un hash/tag, on a
+  peut-être commité dans le vide. `git switch -c <nom>` **rattache** ces commits à
+  une vraie branche ; `git switch <branche>` les **abandonne** (récupérables via
+  reflog tant que `gc` n'est pas passé).
+- **Repointer une branche** sans bouger les fichiers : `git reset --soft <hash>`
+  déplace juste le pointeur. Pour ramener une branche exactement sur le remote :
+  `git reset --hard origin/<branche>`.
+
+### revert : annuler sans réécrire (le geste pour l'historique public)
+
+`git revert <commit>` ne supprime rien : il **crée un nouveau commit** dont le
+contenu est l'**inverse** du commit visé. L'historique garde la trace « on a fait
+X puis on a annulé X ». C'est **la** bonne réponse pour annuler quelque chose
+**déjà poussé**, parce que ça ne casse l'historique de personne.
+
+```mermaid
+flowchart LR
+    A[A] --> B["B (bug)"] --> C[C] --> R["R = revert de B<br/>(annule B, B reste dans l'histoire)"]
+```
+
+> `reset` recule le pointeur (réécrit l'histoire) ; `revert` avance avec un commit
+> d'annulation (préserve l'histoire). Sur une branche partagée : **revert**.
+
+### amend & cherry-pick : retoucher et transplanter
+
+- **`git commit --amend`** : **remplace** le dernier commit (nouveau hash) pour
+  corriger son message ou y intégrer des modifs oubliées. À ne pas faire s'il est
+  déjà poussé (sinon `--force-with-lease`).
+- **`git cherry-pick <commit>`** : **rejoue un commit isolé** (d'une autre branche)
+  sur la branche courante — utile pour récupérer un correctif précis sans merger
+  toute la branche. Crée un nouveau commit (nouveau hash, même contenu).
+
+### Gestion des conflits : la mécanique commune
+
+Un **conflit** survient quand deux historiques modifient **les mêmes lignes** de
+façon incompatible, lors d'un `merge`, `rebase`, `cherry-pick`, `revert` ou
+`stash pop`. Git **ne tranche pas** : il met l'opération en **pause**, écrit les
+deux versions dans le fichier entre marqueurs, et attend ta décision.
+
+```text
+<<<<<<< HEAD
+version de la branche courante
+=======
+version de la branche entrante
+>>>>>>> autre-branche
+```
+
+La résolution suit **toujours** le même rituel, quelle que soit l'opération :
+
+```mermaid
+flowchart TD
+    START["Opération en pause<br/>(conflit signalé par git status)"]
+    START --> EDIT["1. Éditer chaque fichier en conflit<br/>supprimer les marqueurs, garder le bon contenu"]
+    EDIT --> ADD["2. git add fichier-résolu<br/>(= 'ce conflit-là est tranché')"]
+    ADD --> MORE{Reste-t-il<br/>des conflits ?}
+    MORE -->|Oui| EDIT
+    MORE -->|Non| CONT["3. Continuer l'opération<br/>merge: git commit · rebase/cherry-pick: --continue"]
+    START -.->|Trop embourbé| ABORT["git ...--abort<br/>(merge/rebase/cherry-pick)<br/>→ revient à l'état d'avant"]
+```
+
+Trois réflexes :
+
+- **`git status`** pendant un conflit liste précisément les fichiers à résoudre et
+  rappelle la commande de continuation.
+- **`git add`** sur un fichier édité **est** l'acte qui dit « conflit résolu » —
+  c'est le même `add` que d'habitude, réutilisé comme accusé de réception.
+- **`--abort`** (`git merge --abort`, `git rebase --abort`, etc.) est la porte de
+  sortie : il annule proprement l'opération et restaure l'état initial. À utiliser
+  sans honte dès qu'on s'embrouille.
+
+### Le filet sous tout ça : reflog
+
+Tous les gestes réécrivant l'historique (`reset --hard`, `rebase`, `amend`)
+peuvent sembler « perdre » des commits. Ils restent **récupérables** via
+`git reflog` tant que `gc` n'est pas passé — voir [section prune & gc](#prune--gc--le-ménage-des-objets-inaccessibles).
+C'est ce qui rend ces opérations **réversibles en pratique**, donc moins
+effrayantes qu'elles n'en ont l'air.
+
+> Commandes exactes de tous ces gestes → [cheat-sheet Git](../cheat-sheets/git.md#annuler--corriger).
 
 ## Worktree : plusieurs répertoires de travail pour un même dépôt
 
