@@ -544,3 +544,127 @@ flowchart LR
 
 > `fetch` est sûr (ne touche ni `main` locale ni les fichiers). `pull` peut créer
 > des conflits. `push` est refusé si le distant a divergé (intégrer d'abord).
+
+## Commandes à effets voisins : laquelle choisir
+
+Plusieurs commandes produisent un résultat *qui se ressemble* mais répondent à des
+intentions différentes. Cette section les départage. Le modèle sous-jacent (objets,
+pointeurs, zones) est détaillé dans la [fiche concept](../concepts/git-modele-mental.md).
+
+### merge vs rebase — intégrer le travail d'une autre branche
+
+Même but (récupérer les commits de `main` dans ma branche, ou l'inverse), deux
+philosophies d'historique.
+
+| | `git merge` | `git rebase` |
+|---|---|---|
+| Historique | **préservé** : branches parallèles + commit de fusion | **réécrit** : linéaire, comme si on avait codé après coup |
+| Hash des commits | inchangés | **recréés** (nouveaux hash) |
+| Traçabilité | montre la réalité (quand/comment ça a fusionné) | gomme la divergence (plus lisible, moins fidèle) |
+| Sur des commits déjà poussés/partagés | **sûr** | **dangereux** (réécrit l'histoire des autres) |
+| Conflits | résolus **une fois**, à la fusion | résolus **commit par commit** (potentiellement plusieurs fois) |
+
+**Quand préférer quoi :**
+
+- **rebase** pour **nettoyer une branche locale et privée** avant de la partager :
+  mettre sa feature à jour sur `main` (`git rebase main`), squasher, réordonner.
+  Objectif = un historique propre et linéaire à proposer en revue.
+- **merge** pour **intégrer du public** ou conserver la trace d'une fusion :
+  ramener une feature terminée dans `main`, ou tout cas où réécrire des commits
+  déjà poussés casserait le travail d'autrui.
+
+> **Règle d'or : rebase ce qui est local et privé, merge ce qui est public.**
+> Et sur une branche partagée, si tu as quand même rebasé : `--force-with-lease`,
+> jamais `--force`.
+
+### merge (classique) vs cherry-pick — tout intégrer ou un seul commit
+
+| | `git merge feature` | `git cherry-pick <commit>` |
+|---|---|---|
+| Quantité intégrée | **toute** la branche (tous ses commits) | **un** commit choisi (ou une plage) |
+| Lien d'historique | conservé (la fusion est tracée) | **aucun** : le commit est copié, recréé ailleurs |
+| Résultat | les deux historiques convergent | un diff **dupliqué** (original + copie, hash différent) |
+| Intention | « cette branche est finie, je l'absorbe » | « je veux juste *ce* correctif-là » |
+
+**Quand préférer quoi :**
+
+- **merge** quand la branche entière doit rejoindre la cible (cas normal d'une
+  feature terminée).
+- **cherry-pick** pour **extraire un correctif isolé** sans embarquer le reste :
+  typiquement **backporter** un fix de `main` vers une branche de release, ou
+  récupérer un commit utile d'une branche encore en chantier.
+
+> ⚠️ Comme cherry-pick **duplique** le diff, merger plus tard la branche d'origine
+> peut produire un conflit ou un commit « vide » (le même changement arrive deux
+> fois). Le merge classique ne crée jamais ce doublon.
+
+### merge --ff vs cherry-pick — pourquoi ce n'est pas la même chose
+
+Les deux donnent un historique linéaire, d'où la confusion. Mais :
+
+- **`merge --ff`** ne crée **aucun** commit : il fait **glisser un pointeur** le
+  long d'une ligne qui existe déjà (possible seulement si la cible n'a **pas**
+  divergé). Les commits gardent leur hash.
+- **`cherry-pick`** **fabrique** un nouveau commit (hash neuf) en rejouant un diff,
+  et marche **même entre branches divergentes**.
+
+> En une phrase : **`merge --ff` adopte des commits existants en bougeant un
+> pointeur ; `cherry-pick` en fabrique de nouveaux en copiant un diff.**
+
+### reset vs revert — annuler un commit
+
+| | `git reset` | `git revert` |
+|---|---|---|
+| Mécanisme | **recule** la branche (réécrit l'historique) | **ajoute** un commit qui inverse (préserve l'historique) |
+| Le commit annulé | disparaît de la branche (récupérable via reflog) | reste visible dans l'historique |
+| Sur du déjà poussé | **dangereux** (force-push nécessaire) | **sûr** (commit normal, `push` simple) |
+| Usage | corriger **en local** avant partage | annuler **proprement** quelque chose de **public** |
+
+**Quand préférer quoi :** `reset` tant que c'est local et non partagé ; `revert`
+dès que le commit fautif est déjà sur le remote.
+
+### restore vs reset vs checkout — annuler des modifications
+
+Trois commandes se chevauchent historiquement sur « annuler / restaurer ».
+
+| Intention | Commande recommandée (moderne) | Équivalent ancien |
+|---|---|---|
+| Jeter les modifs **non indexées** d'un fichier | `git restore <f>` | `git checkout -- <f>` |
+| **Désindexer** (garder les modifs, vider l'index) | `git restore --staged <f>` | `git reset <f>` |
+| Récupérer un fichier **depuis un autre commit/branche** | `git restore --source=<ref> <f>` | `git checkout <ref> -- <f>` |
+| Changer de branche | `git switch <b>` | `git checkout <b>` |
+
+> `restore` (fichiers) et `switch` (branches) ont été créés pour **désambiguïser**
+> l'ancien `checkout`, qui faisait tout. À privilégier : l'intention est explicite.
+
+### La gestion des conflits : un rituel commun à toutes ces commandes
+
+Bonne nouvelle : **merge, rebase, cherry-pick, revert et `stash pop` gèrent les
+conflits exactement de la même façon.** Git met l'opération en pause, écrit les
+marqueurs `<<<<<<<` / `=======` / `>>>>>>>` dans les fichiers, et attend :
+
+```bash
+# 1. éditer chaque fichier en conflit (supprimer les marqueurs, garder le bon contenu)
+# 2. marquer comme résolu :
+git add <fichier-résolu>
+# 3. continuer l'opération — la commande dépend du contexte :
+git commit            # pour un merge (message pré-rempli)
+git rebase --continue # pour un rebase
+git cherry-pick --continue
+git revert --continue
+# ou tout annuler et revenir à l'état d'avant :
+git merge --abort  /  git rebase --abort  /  git cherry-pick --abort
+```
+
+**La seule vraie différence** porte sur le **nombre de fois** où un conflit peut
+surgir :
+
+- **merge / cherry-pick (1 commit) / revert** : la résolution se fait **en une
+  passe** (un seul point de conflit).
+- **rebase** : chaque commit rejoué peut entrer en conflit → on peut résoudre
+  **plusieurs fois de suite** (un `--continue` après chaque). C'est le prix de
+  l'historique linéaire, et la raison pour laquelle un gros rebase est plus
+  pénible qu'un merge unique.
+
+> `git status` rappelle toujours, pendant un conflit, les fichiers à résoudre et la
+> commande de continuation exacte. En cas de doute : `--abort` et on recommence.
