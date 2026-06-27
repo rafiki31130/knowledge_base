@@ -312,3 +312,235 @@ node_modules/
 # Cesser de suivre un fichier déjà commité après l'avoir ajouté au .gitignore
 git rm --cached <fichier>
 ```
+
+## Visualisation : ce que chaque commande provoque
+
+Galerie de schémas montrant l'**effet** de chaque commande sur le graphe de
+commits ou sur les trois zones. Pour le *pourquoi* derrière ces gestes →
+[fiche concept : modèle mental de Git](../concepts/git-modele-mental.md).
+
+**Conventions de couleur** (identiques dans tous les schémas ci-dessous) :
+
+```mermaid
+flowchart LR
+    L1["commit existant"]:::commit
+    L2["commit créé par la commande"]:::neuf
+    L3["commit abandonné / perdu"]:::perdu
+    L4["pointeur (HEAD, branche)"]:::ptr
+    classDef commit fill:#cfe2ff,stroke:#0969da,color:#000
+    classDef neuf fill:#bbf7d0,stroke:#1a7f37,color:#000
+    classDef perdu fill:#ffd7d5,stroke:#cf222e,color:#000,stroke-dasharray:5 5
+    classDef ptr fill:#fff8c5,stroke:#9a6700,color:#000
+```
+
+> Dans les graphes, les flèches suivent l'**ordre chronologique** (le plus ancien
+> à gauche). En interne Git pointe l'inverse (enfant → parent), mais pour *voir*
+> ce qu'une commande fait, le sens du temps est plus parlant.
+
+### `git add` / `git commit` — du working tree au dépôt
+
+```mermaid
+flowchart LR
+    WT["working tree<br/>fichier modifié"]:::wt -->|git add| IDX["index<br/>fichier indexé"]:::idx
+    IDX -->|git commit| REPO["dépôt<br/>nouveau commit"]:::repo
+    classDef wt fill:#ffe9d6,stroke:#bc4c00,color:#000
+    classDef idx fill:#fff8c5,stroke:#9a6700,color:#000
+    classDef repo fill:#bbf7d0,stroke:#1a7f37,color:#000
+```
+
+### `git commit` — la branche courante avance
+
+```mermaid
+flowchart LR
+    subgraph Avant
+        a1["C1"]:::commit --> a2["C2"]:::commit
+        Ha["HEAD → main"]:::ptr -.-> a2
+    end
+    subgraph Après
+        b1["C1"]:::commit --> b2["C2"]:::commit --> b3["C3"]:::neuf
+        Hb["HEAD → main"]:::ptr -.-> b3
+    end
+    classDef commit fill:#cfe2ff,stroke:#0969da,color:#000
+    classDef neuf fill:#bbf7d0,stroke:#1a7f37,color:#000
+    classDef ptr fill:#fff8c5,stroke:#9a6700,color:#000
+```
+
+### `git switch -c feature` — créer une branche (rien n'est copié)
+
+```mermaid
+flowchart LR
+    c1["C1"]:::commit --> c2["C2"]:::commit
+    main["main"]:::ptr -.-> c2
+    feat["feature (nouveau pointeur)"]:::neuf -.-> c2
+    HEAD["HEAD"]:::ptr -.-> feat
+    classDef commit fill:#cfe2ff,stroke:#0969da,color:#000
+    classDef neuf fill:#bbf7d0,stroke:#1a7f37,color:#000
+    classDef ptr fill:#fff8c5,stroke:#9a6700,color:#000
+```
+
+### `git merge` (avec commit de fusion)
+
+Deux branches divergentes réunies par un commit à deux parents.
+
+```mermaid
+gitGraph
+    commit id: "A"
+    commit id: "B"
+    branch feature
+    checkout feature
+    commit id: "C"
+    commit id: "D"
+    checkout main
+    commit id: "E"
+    merge feature id: "M"
+```
+
+### `git merge --ff` (fast-forward) — pas de commit de fusion
+
+Quand `main` n'a pas divergé, le pointeur **glisse** simplement en avant.
+
+```mermaid
+flowchart LR
+    subgraph Avant
+        a1["A"]:::commit --> a2["B"]:::commit --> a3["C"]:::commit
+        ma["main"]:::ptr -.-> a1
+        fa["feature"]:::ptr -.-> a3
+    end
+    subgraph Après
+        b1["A"]:::commit --> b2["B"]:::commit --> b3["C"]:::commit
+        mb["main"]:::ptr -.-> b3
+        fb["feature"]:::ptr -.-> b3
+    end
+    classDef commit fill:#cfe2ff,stroke:#0969da,color:#000
+    classDef ptr fill:#fff8c5,stroke:#9a6700,color:#000
+```
+
+### `git rebase main` — rejouer ses commits ailleurs (nouveaux hash)
+
+Les commits `C`,`D` sont **recréés** au sommet de `main` ; les originaux sont
+abandonnés.
+
+```mermaid
+flowchart LR
+    subgraph Avant
+        a1["A"]:::commit --> a2["B"]:::commit
+        a2 --> a3["C"]:::commit --> a4["D"]:::commit
+        a2 --> a5["E"]:::commit
+        mna["main"]:::ptr -.-> a5
+        fa["feature"]:::ptr -.-> a4
+    end
+    subgraph Après
+        b1["A"]:::commit --> b2["B"]:::commit --> b5["E"]:::commit
+        b5 --> b3["C'"]:::neuf --> b4["D'"]:::neuf
+        o3["C"]:::perdu
+        o4["D"]:::perdu
+        mnb["main"]:::ptr -.-> b5
+        fb["feature"]:::ptr -.-> b4
+    end
+    classDef commit fill:#cfe2ff,stroke:#0969da,color:#000
+    classDef neuf fill:#bbf7d0,stroke:#1a7f37,color:#000
+    classDef perdu fill:#ffd7d5,stroke:#cf222e,color:#000,stroke-dasharray:5 5
+    classDef ptr fill:#fff8c5,stroke:#9a6700,color:#000
+```
+
+### `git reset` — la branche recule, effet variable sur les zones
+
+`reset --soft/--mixed/--hard HEAD~1` ramène `main` sur `C2`. Le commit `C3` n'est
+plus référencé (récupérable via `reflog`). Ce qui **change**, c'est le sort des
+modifs de `C3` :
+
+```mermaid
+flowchart TB
+    subgraph Départ
+        d1["C1"]:::commit --> d2["C2"]:::commit --> d3["C3"]:::commit
+        hd["HEAD → main"]:::ptr -.-> d3
+    end
+    subgraph soft["--soft : C3 défait, modifs restent INDEXÉES"]
+        s1["C1"]:::commit --> s2["C2"]:::commit
+        s3["C3"]:::perdu
+        hs["HEAD → main"]:::ptr -.-> s2
+        zs["index : plein · working tree : plein"]:::idx
+    end
+    subgraph mixed["--mixed (défaut) : modifs DÉSINDEXÉES (dans le wt)"]
+        m1["C1"]:::commit --> m2["C2"]:::commit
+        m3["C3"]:::perdu
+        hm["HEAD → main"]:::ptr -.-> m2
+        zm["index : vide · working tree : plein"]:::idx
+    end
+    subgraph hard["--hard : modifs SUPPRIMÉES (destructif)"]
+        h1["C1"]:::commit --> h2["C2"]:::commit
+        h3["C3"]:::perdu
+        hh["HEAD → main"]:::ptr -.-> h2
+        zh["index : vide · working tree : vide"]:::danger
+    end
+    classDef commit fill:#cfe2ff,stroke:#0969da,color:#000
+    classDef perdu fill:#ffd7d5,stroke:#cf222e,color:#000,stroke-dasharray:5 5
+    classDef ptr fill:#fff8c5,stroke:#9a6700,color:#000
+    classDef idx fill:#fff8c5,stroke:#9a6700,color:#000
+    classDef danger fill:#ffd7d5,stroke:#cf222e,color:#000
+```
+
+### `git revert C2` — annuler par un nouveau commit (rien n'est perdu)
+
+`C2` reste dans l'historique ; un commit `R` qui inverse ses changements est
+ajouté. C'est le geste sûr pour l'historique **déjà poussé**.
+
+```mermaid
+flowchart LR
+    c1["C1"]:::commit --> c2["C2 (à annuler)"]:::commit --> c3["C3"]:::commit --> r["R = anti-C2"]:::neuf
+    main["HEAD → main"]:::ptr -.-> r
+    classDef commit fill:#cfe2ff,stroke:#0969da,color:#000
+    classDef neuf fill:#bbf7d0,stroke:#1a7f37,color:#000
+    classDef ptr fill:#fff8c5,stroke:#9a6700,color:#000
+```
+
+### `git cherry-pick` — transplanter un commit isolé
+
+Le contenu de `C` (sur `feature`) est rejoué sur `main` sous un **nouveau hash**.
+
+```mermaid
+gitGraph
+    commit id: "A"
+    branch feature
+    checkout feature
+    commit id: "B"
+    commit id: "C"
+    checkout main
+    commit id: "D"
+    cherry-pick id: "C"
+```
+
+### `git stash` / `git stash pop` — mettre de côté puis restaurer
+
+```mermaid
+flowchart LR
+    subgraph s1["git stash"]
+        wt1["working tree<br/>modifs en cours"]:::idx -->|remisé| stash["pile de stash"]:::stash
+        clean["working tree propre"]:::commit
+    end
+    subgraph s2["git stash pop"]
+        stash2["pile de stash"]:::stash -->|restauré + retiré| wt2["working tree<br/>modifs revenues"]:::idx
+    end
+    classDef idx fill:#ffe9d6,stroke:#bc4c00,color:#000
+    classDef stash fill:#e2d9f3,stroke:#6639ba,color:#000
+    classDef commit fill:#cfe2ff,stroke:#0969da,color:#000
+```
+
+### `git fetch` / `git pull` / `git push` — synchroniser avec le remote
+
+```mermaid
+flowchart LR
+    R["origin/main<br/>(serveur distant)"]:::remote
+    T["origin/main<br/>(ref de suivi locale)"]:::track
+    L["main (locale)"]:::ptr
+    R -->|git fetch : met à jour la ref de suivi| T
+    T -->|merge / rebase| L
+    R -.->|git pull = fetch + intégration| L
+    L -->|git push : envoie les commits, avance le distant| R
+    classDef remote fill:#d2f4ea,stroke:#0a7c66,color:#000
+    classDef track fill:#cfe2ff,stroke:#0969da,color:#000
+    classDef ptr fill:#fff8c5,stroke:#9a6700,color:#000
+```
+
+> `fetch` est sûr (ne touche ni `main` locale ni les fichiers). `pull` peut créer
+> des conflits. `push` est refusé si le distant a divergé (intégrer d'abord).
