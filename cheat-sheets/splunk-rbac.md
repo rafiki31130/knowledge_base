@@ -45,14 +45,16 @@ le paquet, déclarés dans `$SPLUNK_HOME/etc/system/default/authorize.conf` (jam
 d'override local sur une instance neuve). Chaînes `importRoles` et capabilities
 clés observées en lecture REST native :
 
-| Rôle | `importRoles` | Caps locales | Quotas (`srchJobsQuota` / `srchDiskQuota`) | Index (`srchIndexesAllowed`) | Rôle |
+Compteurs ci-dessous : **caps déclarées** dans la stanza (≠ effectives, qui ajoutent les 5 du plancher `[default]`). Stanzas exhaustives juste après.
+
+| Rôle | `importRoles` | Caps déclarées | Quotas (`srchJobsQuota` / `srchDiskQuota`) | Index (`srchIndexesAllowed`) | Note |
 |---|---|---|---|---|---|
-| `user` | *(aucun)* | 28 (dont `search`, `accelerate_search`, `edit_own_objects`, `schedule_rtsearch`, `run_collect`) | `3` / `100` | `*` (non-internes) | Socle utilisateur : peut chercher. |
-| `power` | `user` | 13 (dont `rtsearch`, `schedule_search`, `edit_sourcetypes`) — **pas `search` en local** | `10` / `500` | `*` | Power user : obtient `search` **via** `user`. |
+| `user` | *(aucun)* | 25 (→ **28 effectives**) — dont `search`, `accelerate_search`, `run_collect` | `3` / `100` *(du `[default]`)* | `*` (non-internes) | Socle utilisateur : peut chercher. |
+| `power` | `user` | 17 (dont `rtsearch`, `schedule_search`, `edit_sourcetypes`) — **pas `search` en local** | `10` / `500` | `*` | Power user : obtient `search` **via** `user`. |
 | `admin` | `power` ; `user` | 113 | `50` / `10000` | `*` ; `_*` (internes inclus) | Administration. Importe explicitement les **deux**. |
-| `can_delete` | *(aucun)* | 6 (dont `delete_by_keyword`) | `3` / `100` | — | Requis pour la commande SPL `delete`. À assigner ponctuellement. |
-| `splunk-system-role` | `admin` | 0 locales (**154** importées via `admin`) | — | — | Rôle système interne. Ne pas assigner à des humains. |
-| `splunk_system_upgrader` | *(aucun)* | 12 | — | — | Rôle système (migrations d'upgrade). Ne pas assigner. |
+| `can_delete` | *(aucun)* | 1 (`delete_by_keyword`, → **6 effectives**) | `3` / `100` *(du `[default]`)* | — | Requis pour la commande SPL `delete`. À assigner ponctuellement. |
+| `splunk-system-role` | `admin` | 0 (**154** effectives via `admin`) | — | — | Rôle système interne. Ne pas assigner à des humains. |
+| `splunk_system_upgrader` | *(aucun)* | 7 (→ **12 effectives**) | `3` / `100` *(du `[default]`)* | — | Rôle système (migrations d'upgrade). Ne pas assigner. |
 
 Points qui surprennent souvent :
 
@@ -75,6 +77,224 @@ srchIndexesAllowed    = index_app ; index_summary
 srchJobsQuota         = 3          # redéclarer : l'héritage n'enforce pas les quotas (§3)
 srchDiskQuota         = 100
 ```
+
+### Stanzas complètes des rôles built-in (référence 9.4.6)
+
+Contenu **réel** du paquet (`$SPLUNK_HOME/etc/system/default/authorize.conf`),
+identique sur toute install 9.4.6 fraîche. Ce sont les capabilities
+**déclarées** dans chaque rôle ; les capabilities **effectives** ajoutent les 5
+du plancher `[default]` (§2) pour les rôles qui ne les déclarent pas — ex. `user`
+déclare 25 caps → **28 effectives** avec `edit_own_objects` / `list_all_objects`
+/ `schedule_rtsearch`. Idem les quotas absents d'une stanza = valeur du `[default]`.
+
+```ini
+[role_user]
+# importRoles : aucun
+change_own_password          = enabled
+edit_search_schedule_window  = enabled
+get_metadata                 = enabled
+get_typeahead                = enabled
+input_file                   = enabled
+list_inputs                  = enabled
+output_file                  = enabled
+upload_lookup_files          = enabled
+request_remote_tok           = enabled
+rest_apps_view               = enabled
+rest_properties_get          = enabled
+rest_properties_set          = enabled
+search                       = enabled
+accelerate_search            = enabled
+list_accelerate_search       = enabled
+pattern_detect               = enabled
+list_metrics_catalog         = enabled
+list_tokens_own              = enabled
+export_results_is_visible    = enabled
+run_collect                  = enabled
+run_mcollect                 = enabled
+run_dump                     = enabled
+run_sendalert                = enabled
+run_custom_command           = enabled
+rest_access_server_endpoints = enabled
+srchIndexesAllowed = *
+srchIndexesDefault = main
+
+[role_can_delete]
+# importRoles : aucun
+delete_by_keyword         = enabled
+cumulativeSrchJobsQuota   = 0
+cumulativeRTSrchJobsQuota = 0
+deleteIndexesAllowed      = *
+
+[role_power]
+importRoles = user
+edit_messages                      = enabled
+schedule_search                    = enabled
+metric_alerts                      = enabled
+embed_report                       = enabled
+edit_dispatch_as                   = enabled
+rtsearch                           = enabled
+edit_sourcetypes                   = enabled
+edit_statsd_transforms             = enabled
+search_process_config_refresh      = enabled
+edit_log_alert_event               = enabled
+run_msearch                        = enabled
+run_dump                           = enabled
+run_sendalert                      = enabled
+run_custom_command                 = enabled
+rest_access_server_endpoints       = enabled
+list_field_filter                  = enabled
+run_commands_ignoring_field_filter = enabled
+srchIndexesAllowed = *
+srchIndexesDefault = main
+srchDiskQuota             = 500
+srchJobsQuota             = 10
+rtSrchJobsQuota           = 20
+cumulativeSrchJobsQuota   = 100
+cumulativeRTSrchJobsQuota = 200
+
+[role_admin]
+importRoles = power;user
+edit_messages                  = enabled
+accelerate_datamodel           = enabled
+admin_all_objects              = enabled
+edit_tokens_settings           = enabled
+change_authentication          = enabled
+change_audit                   = enabled
+edit_bookmarks_mc              = enabled
+create_external_lookup         = enabled
+edit_external_lookup           = enabled
+edit_deployment_client         = enabled
+list_deployment_client         = enabled
+edit_deployment_server         = enabled
+list_deployment_server         = enabled
+list_search_head_clustering    = enabled
+dispatch_rest_to_indexers      = enabled
+edit_authentication_extensions = enabled
+edit_cmd                       = enabled
+edit_upload_and_index          = enabled
+edit_tcp_stream                = enabled
+list_dist_peer                 = enabled
+edit_dist_peer                 = enabled
+edit_field_filter              = enabled
+list_field_filter              = enabled
+edit_restmap                   = enabled
+edit_forwarders                = enabled
+edit_indexerdiscovery          = enabled
+edit_httpauths                 = enabled
+edit_indexer_cluster           = enabled
+edit_input_defaults            = enabled
+list_introspection             = enabled
+edit_local_apps                = enabled
+edit_monitor                   = enabled
+edit_tokens_own                = enabled
+edit_roles                     = enabled
+edit_scripted                  = enabled
+edit_search_concurrency_all    = enabled
+edit_search_head_clustering    = enabled
+edit_search_server             = enabled
+edit_search_scheduler          = enabled
+edit_search_schedule_priority  = enabled
+edit_tokens_all                = enabled
+list_tokens_all                = enabled
+edit_certificates              = enabled
+list_certificates              = enabled
+edit_spl2_permissions          = enabled
+list_indexer_cluster           = enabled
+list_pipeline_sets             = enabled
+list_search_scheduler          = enabled
+list_settings                  = enabled
+edit_server                    = enabled
+edit_user_seed                 = enabled
+edit_splunktcp                 = enabled
+edit_splunktcp_ssl             = enabled
+edit_splunktcp_token           = enabled
+edit_tcp                       = enabled
+edit_udp                       = enabled
+edit_telemetry_settings        = enabled
+edit_user                      = enabled
+edit_view_html                 = enabled
+edit_web_settings              = enabled
+get_diag                       = enabled
+indexes_edit                   = enabled
+install_apps                   = enabled
+license_edit                   = enabled
+license_tab                    = enabled
+license_view_warnings          = enabled
+refresh_application_licenses   = enabled
+list_forwarders                = enabled
+list_indexerdiscovery          = enabled
+list_httpauths                 = enabled
+rest_apps_management           = enabled
+restart_splunkd                = enabled
+restart_reason                 = enabled
+run_debug_commands             = enabled
+list_token_http                = enabled
+edit_token_http                = enabled
+web_debug                      = enabled
+search_process_config_refresh  = enabled
+edit_server_crl                = enabled
+edit_storage_passwords         = enabled
+list_storage_passwords         = enabled
+edit_encryption_key_provider   = enabled
+never_lockout                  = enabled
+never_expire                   = enabled
+list_health                    = enabled
+edit_health                    = enabled
+apps_restore                   = enabled
+apps_backup                    = enabled
+fsh_manage                     = enabled
+fsh_search                     = enabled
+edit_workload_pools            = enabled
+list_workload_pools            = enabled
+select_workload_pools          = enabled
+edit_workload_rules            = enabled
+list_workload_rules            = enabled
+list_workload_policy           = enabled
+edit_workload_policy           = enabled
+edit_metric_schema             = enabled
+edit_metrics_rollup            = enabled
+list_cascading_plans           = enabled
+list_remote_output_queue       = enabled
+list_remote_input_queue        = enabled
+list_ingest_rulesets           = enabled
+edit_ingest_rulesets           = enabled
+capture_ingest_events          = enabled
+edit_log_alert_event           = enabled
+edit_global_banner             = enabled
+edit_web_features              = enabled
+edit_kvstore                   = enabled
+upload_mmdb_files              = enabled
+use_remote_proxy               = enabled
+edit_manager_xml               = enabled
+merge_buckets                  = enabled
+srchIndexesAllowed = *;_*
+srchIndexesDefault = main;os
+srchFilter         = *
+srchTimeWin        = 0
+srchTimeEarliest   = 0
+srchDiskQuota             = 10000
+srchJobsQuota             = 50
+rtSrchJobsQuota           = 100
+cumulativeSrchJobsQuota   = 200
+cumulativeRTSrchJobsQuota = 400
+
+[role_splunk-system-role]
+importRoles = admin
+# aucune capability ni quota en propre : tout vient de l'import admin
+
+[role_splunk_system_upgrader]
+# importRoles : aucun — caps en propre (le reste = plancher [default])
+edit_indexer_cluster        = enabled
+list_indexer_cluster        = enabled
+list_search_head_clustering = enabled
+list_settings               = enabled
+upgrade_splunk_idxc         = enabled
+upgrade_splunk_shc          = enabled
+use_remote_proxy            = enabled
+```
+
+> `splunk-system-role` et `splunk_system_upgrader` sont des **rôles système**
+> (clustering, migrations d'upgrade) — **ne pas les assigner à des humains**.
 
 ---
 
