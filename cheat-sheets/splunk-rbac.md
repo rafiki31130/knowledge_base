@@ -296,6 +296,26 @@ use_remote_proxy            = enabled
 > `splunk-system-role` et `splunk_system_upgrader` sont des **rôles système**
 > (clustering, migrations d'upgrade) — **ne pas les assigner à des humains**.
 
+> **Couches d'apps (la stanza `system/default` n'est pas « toute » la stanza)** :
+> les apps groupées de Splunk Enterprise **étendent** des rôles via la précédence
+> de conf (`etc/apps/*/default/authorize.conf`). En 9.4.6, `[role_admin]` reçoit
+> **+4 caps** hors `system/default` : `edit_modinput_journald` (app
+> `journald_input`), `upgrade_splunk_shc` + `upgrade_splunk_idxc` (app
+> `splunk-rolling-upgrade`), `splunk_mobile_administration` (app
+> `splunk_secure_gateway`) → **admin effectif = 113 + 4 = 117 caps**. Et
+> `[role_splunk_system_upgrader]` est défini **entièrement** par l'app
+> `splunk-rolling-upgrade` (rien dans `system/default`). **À retenir** : un rôle
+> peut être assemblé sur **plusieurs fichiers** ; pour voir sa stanza *effective*
+> réelle, utiliser `splunk btool authorize list role_<nom>` plutôt que de lire un
+> seul fichier.
+>
+> **Aucune capability n'est jamais déclarée `= disabled`** dans un rôle livré
+> (system ou apps) : le modèle Splunk d'origine est **purement additif**
+> (`= enabled` seulement). Le retrait par `= disabled` (§4) est un mécanisme de
+> *précédence de conf* que les defaults Splunk n'illustrent nulle part — d'où la
+> formulation « `disabled` has no effect » de la doc, écrite dans l'optique
+> additive `importRoles`.
+
 ---
 
 ## 2. La stanza `[default]` d'`authorize.conf`
