@@ -127,6 +127,6 @@ pas à `tools/list` n'exposera aucun outil dans la session.
 
 ## Voir aussi
 
-- [GitHub CLI (gh)](./gh-cli.md) — autre outil CLI scriptable, mode non interactif similaire.
-- [Secrets & SSH](./secrets-ssh.md) — gérer les jetons MCP (`${VAR}`) hors du fichier de config.
-- [Docker](./docker.md) — exécuter un serveur MCP en conteneur (transport stdio/http).
+- [GitHub CLI (gh)](gh-cli.md) — autre outil CLI scriptable, mode non interactif similaire.
+- [Secrets & SSH](secrets-ssh.md) — gérer les jetons MCP (`${VAR}`) hors du fichier de config.
+- [Docker](docker.md) — exécuter un serveur MCP en conteneur (transport stdio/http).

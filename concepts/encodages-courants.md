@@ -122,6 +122,6 @@ clair produit du bruit.
 
 ## Voir aussi
 
-- [Regex pour les logs : greedy, ancres, lookaround](./regex-pour-logs.md)
-- [Formats de logs courants et leurs pièges de parsing](./formats-logs-et-pieges-parsing.md)
-- [Identités dans les logs : SID, UPN, sAMAccountName, notions OIDC](./identites-dans-les-logs.md)
+- [Regex pour les logs : greedy, ancres, lookaround](regex-pour-logs.md)
+- [Formats de logs courants et leurs pièges de parsing](formats-logs-et-pieges-parsing.md)
+- [Identités dans les logs : SID, UPN, sAMAccountName, notions OIDC](identites-dans-les-logs.md)

@@ -73,7 +73,7 @@ Qualifier = ouvrir une investigation. Indices qui font pencher de ce côté :
 - **Récurrence / progression** : l'alerte se répète ou s'intensifie.
 
 En cas de qualification, le triage passe le relais à la
-[boucle d'investigation](./boucle-investigation.md) : formuler la première
+[boucle d'investigation](boucle-investigation.md) : formuler la première
 question, poser une hypothèse testable, requêter, pivoter.
 
 ## Réduire le bruit à la source
@@ -109,5 +109,5 @@ Le triage révèle des motifs ; les exploiter améliore le flux en amont :
 
 ## Voir aussi
 
-- [La boucle d'investigation : question → hypothèse → requête → pivot](./boucle-investigation.md)
-- [Pivots classiques : user → host → process → network → file](./pivots-investigation.md)
+- [La boucle d'investigation : question → hypothèse → requête → pivot](boucle-investigation.md)
+- [Pivots classiques : user → host → process → network → file](pivots-investigation.md)

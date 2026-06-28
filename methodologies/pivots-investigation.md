@@ -79,7 +79,7 @@ est en soi un pivot :
 
 La fiabilité de l'enchaînement dépend de l'**alignement temporel** des sources :
 un drift d'horloge casse l'ordre des pivots. Voir
-[Temps dans les logs : timezones, epoch, drift d'horloge](../concepts/temps-dans-les-logs.md).
+[Temps dans les logs : timezones, epoch, drift d'horloge](temps-dans-les-logs.md).
 
 ## Exemple déroulé (fictif)
 
@@ -99,7 +99,7 @@ construit pivot après pivot.
 - **Conserver la provenance de chaque valeur** : noter d'où vient chaque clé de
   pivot évite les rapprochements faux (deux `user01` de référentiels différents
   ne sont pas la même personne — voir
-  [Identités dans les logs](../concepts/identites-dans-les-logs.md)).
+  [Identités dans les logs](identites-dans-les-logs.md)).
 - **Normaliser les clés avant de pivoter** : casse, fuseau, forme d'identifiant.
   Un pivot sur des valeurs non normalisées rate des correspondances.
 - **Distinguer fait et lien supposé** : « le même hash sur deux hôtes » est un
@@ -117,7 +117,7 @@ construit pivot après pivot.
 
 ## Voir aussi
 
-- [La boucle d'investigation : question → hypothèse → requête → pivot](./boucle-investigation.md)
-- [Triage d'alerte : qualifier / déqualifier](./triage-alerte.md)
-- [Identités dans les logs : SID, UPN, sAMAccountName, notions OIDC](../concepts/identites-dans-les-logs.md)
-- [Temps dans les logs : timezones, epoch, drift d'horloge](../concepts/temps-dans-les-logs.md)
+- [La boucle d'investigation : question → hypothèse → requête → pivot](boucle-investigation.md)
+- [Triage d'alerte : qualifier / déqualifier](triage-alerte.md)
+- [Identités dans les logs : SID, UPN, sAMAccountName, notions OIDC](identites-dans-les-logs.md)
+- [Temps dans les logs : timezones, epoch, drift d'horloge](temps-dans-les-logs.md)

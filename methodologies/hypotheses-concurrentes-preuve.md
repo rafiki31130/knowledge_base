@@ -7,7 +7,7 @@ de front** jusqu'à ce que la preuve les départage, et savoir **peser la qualit
 de cette preuve plutôt que sa simple présence.
 
 Cette fiche est le pendant analytique de
-[La boucle d'investigation](./boucle-investigation.md), qui décrit le mouvement
+[La boucle d'investigation](boucle-investigation.md), qui décrit le mouvement
 question → hypothèse → requête → pivot. Ici on s'attarde sur **l'étape
 hypothèse/requête** : comment éviter le biais de confirmation et noter la force
 d'un indice. On ne réexplique pas la boucle — on la suppose connue.
@@ -98,6 +98,6 @@ faudrait comme donnée (souvent absente) pour trancher.
 
 ## Voir aussi
 
-- [La boucle d'investigation : question → hypothèse → requête → pivot](./boucle-investigation.md) — le cycle dans lequel s'insèrent ces hypothèses
-- [Triage d'alerte : qualifier / déqualifier](./triage-alerte.md) — décider vite si une alerte mérite cette analyse
-- [Pivots classiques : user → host → process → network → file](./pivots-investigation.md) — passer d'un indice établi au suivant
+- [La boucle d'investigation : question → hypothèse → requête → pivot](boucle-investigation.md) — le cycle dans lequel s'insèrent ces hypothèses
+- [Triage d'alerte : qualifier / déqualifier](triage-alerte.md) — décider vite si une alerte mérite cette analyse
+- [Pivots classiques : user → host → process → network → file](pivots-investigation.md) — passer d'un indice établi au suivant

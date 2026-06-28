@@ -107,6 +107,6 @@ pvecm status                         # état du cluster (si nœud en cluster)
 
 ## Voir aussi
 
-- [Linux & systemd](./linux-systemd.md) — gérer les services à l'intérieur d'une VM/CT
-- [Docker](./docker.md) — conteneurs applicatifs (souvent dans une VM Proxmox)
-- [Réseau & pfSense](./reseau-pfsense.md) — diagnostic réseau d'un nœud ou d'un invité
+- [Linux & systemd](linux-systemd.md) — gérer les services à l'intérieur d'une VM/CT
+- [Docker](docker.md) — conteneurs applicatifs (souvent dans une VM Proxmox)
+- [Réseau & pfSense](reseau-pfsense.md) — diagnostic réseau d'un nœud ou d'un invité

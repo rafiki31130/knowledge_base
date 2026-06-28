@@ -40,15 +40,15 @@ Face à un incident, l'entrée est toujours la même : chapitre 05 (arbre de dia
 
 | # | Chapitre | Objet |
 | --- | --- | --- |
-| 00 | [Foundations — trois bundles, un seul mot](./00-foundations.md) | Lexique opposable, mécaniques distinctes, propriétaires |
-| 01 | [Constitution du configuration bundle SHC côté deployer](./01-bundle-shc-constitution.md) | `etc/shcluster/apps`, `splunk apply shcluster-bundle`, conf replication interne |
-| 02 | [Constitution du knowledge bundle côté search head](./02-bundle-search-constitution.md) | Consolidation, hash, delta vs full, `distsearch.conf` |
-| 03 | [Réplication vers les search peers](./03-replication-vers-peers.md) | Classic, cascading, mounted ; `var/run/searchpeers/` ; échecs partiels |
-| 04 | [Séquence d'une recherche distribuée](./04-sequence-recherche-distribuee.md) | bundle ready → fan-out → map → reduce |
-| 05 | [Troubleshooting — arbre de diagnostic](./05-troubleshooting-arbre-de-diag.md) | Symptôme → hypothèses → action → critère d'escalade |
-| 06 | [Investigations — boîte à outils](./06-investigations.md) | CLI, REST, filtres `splunkd.log`, SPL `index=_internal` |
-| 07 | [Pièges et anti-patterns](./07-pieges-anti-patterns.md) | Contenu, topologie, CLI, terminologie 9.x |
-| 99 | [Cheatsheet diag rapide](./99-cheatsheet-diag-rapide.md) | Une page imprimable |
+| 00 | [Foundations — trois bundles, un seul mot](r_knowledge_base_pro/handbooks/splunk-shc-knowledge-bundle/00-foundations.md) | Lexique opposable, mécaniques distinctes, propriétaires |
+| 01 | [Constitution du configuration bundle SHC côté deployer](01-bundle-shc-constitution.md) | `etc/shcluster/apps`, `splunk apply shcluster-bundle`, conf replication interne |
+| 02 | [Constitution du knowledge bundle côté search head](02-bundle-search-constitution.md) | Consolidation, hash, delta vs full, `distsearch.conf` |
+| 03 | [Réplication vers les search peers](03-replication-vers-peers.md) | Classic, cascading, mounted ; `var/run/searchpeers/` ; échecs partiels |
+| 04 | [Séquence d'une recherche distribuée](04-sequence-recherche-distribuee.md) | bundle ready → fan-out → map → reduce |
+| 05 | [Troubleshooting — arbre de diagnostic](05-troubleshooting-arbre-de-diag.md) | Symptôme → hypothèses → action → critère d'escalade |
+| 06 | [Investigations — boîte à outils](r_knowledge_base_pro/handbooks/splunk-shc-knowledge-bundle/06-investigations.md) | CLI, REST, filtres `splunkd.log`, SPL `index=_internal` |
+| 07 | [Pièges et anti-patterns](07-pieges-anti-patterns.md) | Contenu, topologie, CLI, terminologie 9.x |
+| 99 | [Cheatsheet diag rapide](99-cheatsheet-diag-rapide.md) | Une page imprimable |
 
 ## Conventions
 

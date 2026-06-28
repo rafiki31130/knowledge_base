@@ -1,6 +1,6 @@
 # Splunk Usage Governance — A Practitioner's Handbook
 
-> 🇫🇷 **Version française disponible** : [`../README.md`](../README.md)
+> 🇫🇷 **Version française disponible** : [`../README.md`](r_knowledge_base_pro/handbooks/gouvernance-utilisateurs-splunk/README.md)
 
 > A handbook for establishing comprehensive usage governance on a medium-
 > to-large Splunk Enterprise Search Head Cluster (SHC), serving hundreds
@@ -70,7 +70,7 @@ to **govern** Splunk usage at scale.
 
 - Standing up and operating an SHC (`Distributed Deployment Manual`).
 - Day-to-day SPL writing — see the
-  [Splunk Power-User Handbook](../../splunk-user-handbook/README.md)
+  [Splunk Power-User Handbook](r_knowledge_base_pro/handbooks/splunk-user-handbook/README.md)
   in this repo for analyst-side good practices.
 - Cloud, SOAR, Observability, ES, or ITSI topics.
 - Integration details for any specific IdP (ADFS, Entra ID, Okta) —

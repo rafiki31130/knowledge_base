@@ -23,4 +23,4 @@ cas d'investigation. Pas de requête extraite d'un environnement réel.
 
 ## Fiches existantes
 
-- [Détecter les buckets sous RF/SF](./buckets-degrades-detection.md)
+- [Détecter les buckets sous RF/SF](buckets-degrades-detection.md)

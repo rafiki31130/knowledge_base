@@ -101,4 +101,4 @@ base d'une détection d'inactivité ou de rafale.
 
 ## Voir aussi
 
-- [`_time` vs `_indextime` : ne pas les confondre](./time-vs-indextime.md)
+- [`_time` vs `_indextime` : ne pas les confondre](time-vs-indextime.md)

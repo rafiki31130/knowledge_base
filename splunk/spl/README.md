@@ -19,7 +19,7 @@ variantes → pièges.
 
 ## Fiches existantes
 
-- [`_time` vs `_indextime` : ne pas les confondre](./time-vs-indextime.md)
-- [`stats` vs `eventstats` vs `streamstats`](./stats-eventstats-streamstats.md)
-- [`tstats` et `summariesonly` : recherche accélérée](./tstats-summariesonly.md)
-- [Multivalue en SPL : `mvexpand`, `mvfilter`, `mvcount`](./multivalue-spl.md)
+- [`_time` vs `_indextime` : ne pas les confondre](time-vs-indextime.md)
+- [`stats` vs `eventstats` vs `streamstats`](stats-eventstats-streamstats.md)
+- [`tstats` et `summariesonly` : recherche accélérée](tstats-summariesonly.md)
+- [Multivalue en SPL : `mvexpand`, `mvfilter`, `mvcount`](multivalue-spl.md)

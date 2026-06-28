@@ -317,7 +317,7 @@ git rm --cached <fichier>
 
 Galerie de schémas montrant l'**effet** de chaque commande sur le graphe de
 commits ou sur les trois zones. Pour le *pourquoi* derrière ces gestes →
-[fiche concept : modèle mental de Git](../concepts/git-modele-mental.md).
+[fiche concept : modèle mental de Git](git-modele-mental.md).
 
 **Conventions de couleur** (identiques dans tous les schémas ci-dessous) :
 
@@ -549,7 +549,7 @@ flowchart LR
 
 Plusieurs commandes produisent un résultat *qui se ressemble* mais répondent à des
 intentions différentes. Cette section les départage. Le modèle sous-jacent (objets,
-pointeurs, zones) est détaillé dans la [fiche concept](../concepts/git-modele-mental.md).
+pointeurs, zones) est détaillé dans la [fiche concept](git-modele-mental.md).
 
 ### merge vs rebase — intégrer le travail d'une autre branche
 
@@ -676,7 +676,7 @@ surgir :
 > deviennent incompatibles** (chacun doit re-cloner). À ne JAMAIS faire à la légère
 > sur un dépôt partagé sans prévenir. Et si on purge un secret : il reste dans les
 > clones et caches de la forge → **rotation du secret obligatoire** (cf.
-> [CONTRIBUTING](../CONTRIBUTING.md)).
+> [CONTRIBUTING](CONTRIBUTING.md)).
 
 ### D'abord : comprendre ce qui pèse
 

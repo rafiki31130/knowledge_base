@@ -104,6 +104,6 @@ docker image prune                   # uniquement les images « dangling »
 
 ## Voir aussi
 
-- [Proxmox VE](./proxmox.md) — conteneurs LXC vs conteneurs Docker
-- [HAProxy & TLS](./haproxy-tls.md) — exposer des conteneurs derrière un reverse-proxy
-- [Linux & systemd](./linux-systemd.md) — gérer le démon Docker et les services hôte
+- [Proxmox VE](proxmox.md) — conteneurs LXC vs conteneurs Docker
+- [HAProxy & TLS](haproxy-tls.md) — exposer des conteneurs derrière un reverse-proxy
+- [Linux & systemd](linux-systemd.md) — gérer le démon Docker et les services hôte

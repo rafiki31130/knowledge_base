@@ -114,6 +114,6 @@ pfSsh.php playback                      # lister les scripts playback disponible
 
 ## Voir aussi
 
-- [Proxmox VE](./proxmox.md) — réseau des VM/CT et bridges sur l'hyperviseur
-- [HAProxy & TLS](./haproxy-tls.md) — répartition de charge et terminaison TLS en amont
-- [Linux & systemd](./linux-systemd.md) — services réseau et résolution locale
+- [Proxmox VE](proxmox.md) — réseau des VM/CT et bridges sur l'hyperviseur
+- [HAProxy & TLS](haproxy-tls.md) — répartition de charge et terminaison TLS en amont
+- [Linux & systemd](linux-systemd.md) — services réseau et résolution locale

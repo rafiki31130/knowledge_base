@@ -19,11 +19,11 @@ de configuration spécifique à un environnement.
 
 ## Fiches existantes
 
-- [Deployment Server](./deployment-server.md)
-- [Cycle de vie d'un évènement : input → parsing → index → search](./cycle-de-vie-evenement.md)
-- [Parsing phase : UF vs HF/indexer](./parsing-phase-uf-vs-hf.md)
-- [Cycle de vie des buckets en multisite](./buckets-multisite-lifecycle.md)
-- [Rebalance multisite](./rebalance-multisite.md)
-- [ITSI + Federated Search](./itsi-federated-search.md)
-- [Patrons de CI/CD pour déploiement Splunk](./cicd-deployment-patterns.md)
-- [Déclencheurs de rolling restart : SHC & cluster d'indexers](./rolling-restart-triggers.md) — [EN](./EN/rolling-restart-triggers.md)
+- [Deployment Server](deployment-server.md)
+- [Cycle de vie d'un évènement : input → parsing → index → search](cycle-de-vie-evenement.md)
+- [Parsing phase : UF vs HF/indexer](parsing-phase-uf-vs-hf.md)
+- [Cycle de vie des buckets en multisite](buckets-multisite-lifecycle.md)
+- [Rebalance multisite](rebalance-multisite.md)
+- [ITSI + Federated Search](itsi-federated-search.md)
+- [Patrons de CI/CD pour déploiement Splunk](cicd-deployment-patterns.md)
+- [Déclencheurs de rolling restart : SHC & cluster d'indexers](r_knowledge_base_pro/splunk/concepts/rolling-restart-triggers.md) — [EN](r_knowledge_base_pro/splunk/concepts/EN/rolling-restart-triggers.md)

@@ -103,6 +103,6 @@ mongorestore --drop /sauvegarde/           # vider avant restauration (écrase l
 
 ## Voir aussi
 
-- [Docker](./docker.md) — ces bases tournent souvent en conteneur
-- [Linux & systemd](./linux-systemd.md) — gérer le service `couchdb`/`mongod`, lire ses logs
-- [Stockage & NAS](./stockage-nas.md) — où déposer les sauvegardes `mongodump`/dumps
+- [Docker](docker.md) — ces bases tournent souvent en conteneur
+- [Linux & systemd](linux-systemd.md) — gérer le service `couchdb`/`mongod`, lire ses logs
+- [Stockage & NAS](stockage-nas.md) — où déposer les sauvegardes `mongodump`/dumps

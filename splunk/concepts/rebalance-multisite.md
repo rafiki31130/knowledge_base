@@ -42,5 +42,5 @@ splunk rebalance cluster-primaries [-site <site_id>]
 
 ## À lire à côté
 
-- [Cycle de vie des buckets en multisite](./buckets-multisite-lifecycle.md) —
+- [Cycle de vie des buckets en multisite](buckets-multisite-lifecycle.md) —
   comprendre ce que les contraintes de site impliquent pour le rebalance.

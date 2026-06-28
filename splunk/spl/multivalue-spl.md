@@ -110,6 +110,6 @@ réduit le volume.
 
 ## Voir aussi
 
-- [`stats` vs `eventstats` vs `streamstats`](./stats-eventstats-streamstats.md)
-- [`tstats` et `summariesonly` : recherche accélérée](./tstats-summariesonly.md)
-- [Regex pour les logs : greedy, ancres, lookaround](../../concepts/regex-pour-logs.md)
+- [`stats` vs `eventstats` vs `streamstats`](stats-eventstats-streamstats.md)
+- [`tstats` et `summariesonly` : recherche accélérée](tstats-summariesonly.md)
+- [Regex pour les logs : greedy, ancres, lookaround](regex-pour-logs.md)

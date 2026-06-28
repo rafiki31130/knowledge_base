@@ -91,7 +91,7 @@ privilégier sur les clusters de taille significative.
 
 ## À lire à côté
 
-- [Cycle de vie des buckets en multisite](../concepts/buckets-multisite-lifecycle.md)
+- [Cycle de vie des buckets en multisite](buckets-multisite-lifecycle.md)
   — pourquoi on se retrouve avec des buckets dégradés.
-- [Rebalance multisite](../concepts/rebalance-multisite.md) — pour corriger
+- [Rebalance multisite](rebalance-multisite.md) — pour corriger
   une distribution déséquilibrée avant qu'elle ne dégénère.

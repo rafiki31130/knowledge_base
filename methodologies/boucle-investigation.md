@@ -91,5 +91,5 @@ infirmer, un pivot. La timeline se reconstruit boucle après boucle.
 
 ## Voir aussi
 
-- [`stats` vs `eventstats` vs `streamstats`](../splunk/spl/stats-eventstats-streamstats.md) — outiller les requêtes d'une boucle
-- [Formats de logs courants et leurs pièges de parsing](../concepts/formats-logs-et-pieges-parsing.md)
+- [`stats` vs `eventstats` vs `streamstats`](stats-eventstats-streamstats.md) — outiller les requêtes d'une boucle
+- [Formats de logs courants et leurs pièges de parsing](formats-logs-et-pieges-parsing.md)

@@ -127,6 +127,6 @@ tar tzf sauvegarde.tar.gz                                     # lister le conten
 
 ## Voir aussi
 
-- [Linux & systemd](./linux-systemd.md) — diagnostic disque (`df`, `du`) et services
-- [Réseau & pfSense](./reseau-pfsense.md) — tester la connectivité vers le serveur de stockage
-- [Secrets & SSH](./secrets-ssh.md) — `scp`/`sftp` et tunnels pour transferts distants
+- [Linux & systemd](linux-systemd.md) — diagnostic disque (`df`, `du`) et services
+- [Réseau & pfSense](reseau-pfsense.md) — tester la connectivité vers le serveur de stockage
+- [Secrets & SSH](secrets-ssh.md) — `scp`/`sftp` et tunnels pour transferts distants

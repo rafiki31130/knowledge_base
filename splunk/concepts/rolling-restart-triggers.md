@@ -1,4 +1,4 @@
-> 🇬🇧 English version: [EN/rolling-restart-triggers.md](EN/rolling-restart-triggers.md)
+> 🇬🇧 English version: [EN/rolling-restart-triggers.md](r_knowledge_base_pro/splunk/concepts/EN/rolling-restart-triggers.md)
 
 # Déclencheurs de rolling restart — SHC & cluster d'indexers
 
@@ -262,9 +262,9 @@ redondance pour drainer).
 
 ## Voir aussi
 
-- [Cheat-sheet admin Splunk](../../cheat-sheets/splunk-admin.md) — commandes,
+- [Cheat-sheet admin Splunk](splunk-admin.md) — commandes,
   `btool`, pièges courants.
-- [Patrons de CI/CD pour déploiement Splunk](./cicd-deployment-patterns.md) —
+- [Patrons de CI/CD pour déploiement Splunk](cicd-deployment-patterns.md) —
   pipeline de livraison de bundles.
-- [Cycle de vie d'un évènement](./cycle-de-vie-evenement.md) — où jouent
+- [Cycle de vie d'un évènement](cycle-de-vie-evenement.md) — où jouent
   parsing index-time et search-time.

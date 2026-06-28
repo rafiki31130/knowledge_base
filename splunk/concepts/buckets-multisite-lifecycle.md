@@ -47,7 +47,7 @@ des fixups mais **n'implémentent pas un seuil de capacité**.
 
 ## À lire à côté
 
-- [Rebalance multisite](./rebalance-multisite.md) — outils pour redistribuer
+- [Rebalance multisite](rebalance-multisite.md) — outils pour redistribuer
   avant saturation.
-- [Détection des buckets sous RF/SF](../searches/buckets-degrades-detection.md)
+- [Détection des buckets sous RF/SF](buckets-degrades-detection.md)
   — diagnostic post-incident.

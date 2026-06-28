@@ -111,6 +111,6 @@ openssl rsa  -in key.pem  -noout -modulus | openssl md5     # les deux md5 doive
 
 ## Voir aussi
 
-- [Réseau & pfSense](./reseau-pfsense.md) — diagnostic de connectivité en amont du proxy
-- [Docker](./docker.md) — backends souvent conteneurisés derrière HAProxy
-- [Linux & systemd](./linux-systemd.md) — gérer le service haproxy et lire ses logs
+- [Réseau & pfSense](reseau-pfsense.md) — diagnostic de connectivité en amont du proxy
+- [Docker](docker.md) — backends souvent conteneurisés derrière HAProxy
+- [Linux & systemd](linux-systemd.md) — gérer le service haproxy et lire ses logs

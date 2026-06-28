@@ -170,7 +170,7 @@ index=_internal sourcetype=splunkd component=DistributedBundleReplicationManager
 ## Common pitfalls
 
 - **Confusing `maxBundleSize` (on the SH side, MB) and `max_content_length` (on the indexer side, bytes).**
-  Reflex: raise both symmetrically. See [ch. 02 of the handbook](../../handbooks/splunk-shc-knowledge-bundle/EN/02-knowledge-bundle-constitution.md).
+  Reflex: raise both symmetrically. See [ch. 02 of the handbook](02-knowledge-bundle-constitution.md).
 - **Believing that editing in SHC propagates instantly.** The bundle sent reflects the
   *captain* state, which depends on `ConfReplicationThread`. Non-`confOp`-replicated edit = bundle
   that ignores the change. First SHC check: `component=ConfReplicationThread`.
@@ -187,12 +187,12 @@ index=_internal sourcetype=splunkd component=DistributedBundleReplicationManager
 
 ## See also
 
-- Full handbook: [`handbooks/splunk-shc-knowledge-bundle/EN/`](../../handbooks/splunk-shc-knowledge-bundle/EN/README.md)
-  - [Foundations — the 3 bundles](../../handbooks/splunk-shc-knowledge-bundle/EN/00-foundations.md)
-  - [Ch. 02 — knowledge bundle constitution](../../handbooks/splunk-shc-knowledge-bundle/EN/02-knowledge-bundle-constitution.md)
-  - [Ch. 03 — classic / cascading / mounted replication](../../handbooks/splunk-shc-knowledge-bundle/EN/03-replication-to-peers.md)
-  - [Ch. 05 — full decision tree](../../handbooks/splunk-shc-knowledge-bundle/EN/05-troubleshooting-decision-tree.md)
-  - [Ch. 06 — CLI / REST / logs / SPL toolbox](../../handbooks/splunk-shc-knowledge-bundle/EN/06-investigations.md)
-- Concepts: [Deployment server](../../splunk/concepts/deployment-server.md) (not to be confused — this one is for forwarders, not SHC)
-- Sheet [Splunk administration / CLI](../splunk-admin.md) — `btool`, `_internal`, `splunkd.log`
-- Sheet [Secrets & SSH](../secrets-ssh.md) — `op read` to avoid writing `-auth admin:<password>` in clear
+- Full handbook: [`handbooks/splunk-shc-knowledge-bundle/EN/`](r_knowledge_base_pro/handbooks/splunk-shc-knowledge-bundle/EN/README.md)
+  - [Foundations — the 3 bundles](r_knowledge_base_pro/handbooks/splunk-shc-knowledge-bundle/EN/00-foundations.md)
+  - [Ch. 02 — knowledge bundle constitution](02-knowledge-bundle-constitution.md)
+  - [Ch. 03 — classic / cascading / mounted replication](03-replication-to-peers.md)
+  - [Ch. 05 — full decision tree](05-troubleshooting-decision-tree.md)
+  - [Ch. 06 — CLI / REST / logs / SPL toolbox](r_knowledge_base_pro/handbooks/splunk-shc-knowledge-bundle/EN/06-investigations.md)
+- Concepts: [Deployment server](deployment-server.md) (not to be confused — this one is for forwarders, not SHC)
+- Sheet [Splunk administration / CLI](splunk-admin.md) — `btool`, `_internal`, `splunkd.log`
+- Sheet [Secrets & SSH](secrets-ssh.md) — `op read` to avoid writing `-auth admin:<password>` in clear

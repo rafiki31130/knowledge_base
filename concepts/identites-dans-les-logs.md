@@ -135,6 +135,6 @@ user01             | S-1-5-21-...-1108    | user01  | user01@example.com  | <sub
 
 ## Voir aussi
 
-- [Encodages à reconnaître et décoder : base64, URL, hex](./encodages-courants.md)
-- [Formats de logs courants et leurs pièges de parsing](./formats-logs-et-pieges-parsing.md)
-- [Pivots classiques : user → host → process → network → file](../methodologies/pivots-investigation.md)
+- [Encodages à reconnaître et décoder : base64, URL, hex](encodages-courants.md)
+- [Formats de logs courants et leurs pièges de parsing](formats-logs-et-pieges-parsing.md)
+- [Pivots classiques : user → host → process → network → file](pivots-investigation.md)

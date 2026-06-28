@@ -29,7 +29,7 @@ PAT), ou avoir ajouté l'identifiant générique dans le gestionnaire.
 Liste de couples `regex → remplacement` (moteur **.NET**, pas `sed`).
 Groupes de capture en syntaxe .NET : `$1`, `${nom}` (pas `\1`).
 Fournies soit en ligne (`-Replacements`), soit via un fichier JSON (`-ReplacementsFile`,
-cf. [`replacements.example.json`](./replacements.example.json)).
+cf. [`replacements.example.json`](replacements.example.json)).
 
 ## Paramètres principaux
 

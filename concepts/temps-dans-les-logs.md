@@ -82,7 +82,7 @@ collecte.
 
 > En contexte Splunk, c'est exactement la distinction entre `_time` (horodatage
 > de l'évènement) et `_indextime` (réception). Voir
-> [`_time` vs `_indextime` : ne pas les confondre](../splunk/spl/time-vs-indextime.md)
+> [`_time` vs `_indextime` : ne pas les confondre](time-vs-indextime.md)
 > pour la matérialisation du délai et le piège de la fenêtre de recherche.
 
 ## Méthode pour fiabiliser une corrélation temporelle
@@ -105,6 +105,6 @@ collecte.
 
 ## Voir aussi
 
-- [`_time` vs `_indextime` : ne pas les confondre](../splunk/spl/time-vs-indextime.md)
-- [Formats de logs courants et leurs pièges de parsing](./formats-logs-et-pieges-parsing.md)
-- [Encodages à reconnaître et décoder : base64, URL, hex](./encodages-courants.md)
+- [`_time` vs `_indextime` : ne pas les confondre](time-vs-indextime.md)
+- [Formats de logs courants et leurs pièges de parsing](formats-logs-et-pieges-parsing.md)
+- [Encodages à reconnaître et décoder : base64, URL, hex](encodages-courants.md)

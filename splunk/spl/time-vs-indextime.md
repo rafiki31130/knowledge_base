@@ -16,7 +16,7 @@ les fenêtres de recherche et les investigations. La règle tient en une phrase 
 `_indextime` répond à « quand Splunk a-t-il reçu et indexé l'évènement ? ».
 
 > Le timestamp `_time` est posé par le HF ou l'indexer pendant la parsing
-> phase, pas par le UF. Voir [Parsing phase : UF vs HF/indexer](../concepts/parsing-phase-uf-vs-hf.md).
+> phase, pas par le UF. Voir [Parsing phase : UF vs HF/indexer](parsing-phase-uf-vs-hf.md).
 
 ## Pourquoi l'écart existe
 
@@ -90,5 +90,5 @@ donnée indique un goulot de collecte, pas une anomalie applicative.
 
 ## Voir aussi
 
-- [`stats` vs `eventstats` vs `streamstats`](./stats-eventstats-streamstats.md)
-- [Parsing phase : UF vs HF/indexer](../concepts/parsing-phase-uf-vs-hf.md)
+- [`stats` vs `eventstats` vs `streamstats`](stats-eventstats-streamstats.md)
+- [Parsing phase : UF vs HF/indexer](parsing-phase-uf-vs-hf.md)
