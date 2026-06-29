@@ -14,6 +14,6 @@ quoi écrire dans une investigation.
 
 ## Rappel
 
-Aucune référence à un environnement réel. Voir [`../CONTRIBUTING.md`](CONTRIBUTING.md).
+Aucune référence à un environnement réel. Voir [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
 Pour un exemple : utiliser `index=<index>`, `host=<indexer>`, jamais le nom
 réel.

@@ -119,7 +119,7 @@ apt list --installed                 # paquets installés
 
 ## Voir aussi
 
-- [Docker](docker.md) — le démon Docker est lui-même un service systemd
-- [HAProxy & TLS](haproxy-tls.md) — exemple de service géré par systemctl/journalctl
-- [Réseau & pfSense](reseau-pfsense.md) — diagnostic réseau complémentaire
-- [Proxmox VE](proxmox.md) — administrer une VM/CT depuis l'intérieur
+- [Docker](./docker.md) — le démon Docker est lui-même un service systemd
+- [HAProxy & TLS](./haproxy-tls.md) — exemple de service géré par systemctl/journalctl
+- [Réseau & pfSense](./reseau-pfsense.md) — diagnostic réseau complémentaire
+- [Proxmox VE](./proxmox.md) — administrer une VM/CT depuis l'intérieur

@@ -1,6 +1,6 @@
 # Gouvernance des usages Splunk — guide d'approche
 
-> 🇬🇧 **English version available**: [`./EN/README.md`](r_knowledge_base_pro/handbooks/gouvernance-utilisateurs-splunk/EN/README.md)
+> 🇬🇧 **English version available**: [`./EN/README.md`](./EN/README.md)
 
 > Guide d'approche pour mettre en place une gouvernance complète des usages
 > sur un Search Head Cluster (SHC) Splunk Enterprise de taille moyenne à
@@ -46,7 +46,7 @@ search est. Ce guide n'enseigne pas Splunk — il enseigne comment en
 - L'installation et l'exploitation d'un SHC (`Distributed Deployment
   Manual` Splunk).
 - L'écriture de SPL au quotidien — voir le
-  [Splunk Power-User Handbook](r_knowledge_base_pro/handbooks/splunk-user-handbook/README.md) du même
+  [Splunk Power-User Handbook](../splunk-user-handbook/README.md) du même
   dépôt pour les bonnes pratiques côté analyste.
 - Les sujets cloud, SOAR, Observability, ES, ITSI.
 - Les détails d'intégration d'un IdP spécifique (ADFS, Azure AD, Okta) — on

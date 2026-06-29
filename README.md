@@ -9,12 +9,12 @@ partagée — ce qui est ici a vocation à avoir été relu / vérifié.
 - Principes de fonctionnement (« comment ça marche »).
 - Fiches de référence (SPL, regex, formats de logs…).
 - Recettes génériques (recherches d'investigation type, méthodes).
-- Schémas conceptuels (**Mermaid par défaut**, cf. [`CONTRIBUTING.md`](CONTRIBUTING.md#schémas-et-diagrammes--mermaid-par-défaut)), lexiques, pièges connus.
+- Schémas conceptuels (**Mermaid par défaut**, cf. [`CONTRIBUTING.md`](./CONTRIBUTING.md#schémas-et-diagrammes--mermaid-par-défaut)), lexiques, pièges connus.
 
 ## Ce qu'on n'y met pas
 
 Ce dépôt **n'est pas** une documentation d'exploitation. Voir
-[`CONTRIBUTING.md`](CONTRIBUTING.md) pour les règles détaillées. En résumé :
+[`CONTRIBUTING.md`](./CONTRIBUTING.md) pour les règles détaillées. En résumé :
 
 - Pas de noms d'environnements, d'hôtes, d'utilisateurs, de chemins internes.
 - Pas d'IP, de domaines, d'identifiants, de tokens, de secrets.
@@ -30,7 +30,7 @@ elle n'a pas sa place ici. Anonymiser ou reformuler.
 - [`methodologies/`](./methodologies) — Méthodes d'investigation, frameworks.
 - [`concepts/`](./concepts) — Transverse : logs, regex, parsing, réseau…
 - [`cheat-sheets/`](./cheat-sheets) — Aide-mémoire commandes par techno.
-- [`handbooks/`](./handbooks) — Handbooks thématiques (livres Markdown) pour un profil de lecteur ciblé. Voir [`handbooks/README.md`](r_knowledge_base_pro/handbooks/README.md) pour la structure d'un handbook.
+- [`handbooks/`](./handbooks) — Handbooks thématiques (livres Markdown) pour un profil de lecteur ciblé. Voir [`handbooks/README.md`](./handbooks/README.md) pour la structure d'un handbook.
 - [`change-plans/`](./change-plans) — Templates génériques de change plans (description, risques, plan, rollback, validation, réserves). Rédigés en anglais.
 - [`scripts/`](./scripts) — Scripts utilitaires génériques et réutilisables (un sous-dossier par script, avec README + schéma).
 

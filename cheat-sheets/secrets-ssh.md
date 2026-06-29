@@ -134,6 +134,6 @@ sftp user@host                             # session interactive (get, put, ls, 
 
 ## Voir aussi
 
-- [Git](git.md) — clés SSH pour les remotes `git@…` et écrasement de remote
-- [Ansible](ansible.md) — Ansible se connecte par SSH (mêmes clés, agent, config)
-- [Stockage & NAS](stockage-nas.md) — `scp`/`rsync -e ssh` pour transférer vers un partage
+- [Git](./git.md) — clés SSH pour les remotes `git@…` et écrasement de remote
+- [Ansible](./ansible.md) — Ansible se connecte par SSH (mêmes clés, agent, config)
+- [Stockage & NAS](./stockage-nas.md) — `scp`/`rsync -e ssh` pour transférer vers un partage

@@ -78,6 +78,6 @@ prevents readers from treating the fiche as a copy-paste runbook.
 
 ## Existing change plans
 
-- [Splunk multisite cluster — in-place site id rename](splunk-indexer-cluster-site-id-change.md)
+- [Splunk multisite cluster — in-place site id rename](./splunk-indexer-cluster-site-id-change.md)
   — lab-validated method (`splunk offline` + `site_mappings`), with the
   experiment results that justify it.

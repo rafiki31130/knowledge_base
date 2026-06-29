@@ -15,7 +15,7 @@ exécutions GitHub Actions, et appels bruts à l'API. On l'utilise pour ouvrir u
 sans quitter le terminal, suivre l'état d'une CI, ou trier des issues.
 
 > Pour les opérations git pures (commit, branches, rebase, push…), voir la fiche
-> dédiée : [Git](git.md). Cette fiche ne couvre **que** ce qui est propre à `gh`.
+> dédiée : [Git](./git.md). Cette fiche ne couvre **que** ce qui est propre à `gh`.
 
 ## Commandes de base
 
@@ -104,5 +104,5 @@ gh api -X POST /repos/<owner>/<repo>/issues -f title="<titre>"   # POST avec cha
 
 ## Voir aussi
 
-- [Git](git.md) — toutes les opérations git (commit, branches, rebase, push, PR locale)
-- [Secrets & SSH](secrets-ssh.md) — clés SSH pour `git@github.com` et gestion du token
+- [Git](./git.md) — toutes les opérations git (commit, branches, rebase, push, PR locale)
+- [Secrets & SSH](./secrets-ssh.md) — clés SSH pour `git@github.com` et gestion du token

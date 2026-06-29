@@ -6,7 +6,7 @@ qu'elles déplacent. Cette fiche pose les **concepts et le vocabulaire** (HEAD,
 arbre, worktree, ref, prune, detached HEAD…) qui rendent les commandes
 prévisibles. Une fois ce modèle en tête, les commandes se déduisent.
 
-> Pour le **comment** (syntaxe, enchaînements concrets) → [cheat-sheet Git](git.md).
+> Pour le **comment** (syntaxe, enchaînements concrets) → [cheat-sheet Git](../cheat-sheets/git.md).
 > Cette fiche-ci, c'est le **quoi** et le **pourquoi**.
 
 ## L'idée fondatrice : Git stocke des instantanés, pas des diffs
@@ -383,7 +383,7 @@ peuvent sembler « perdre » des commits. Ils restent **récupérables** via
 C'est ce qui rend ces opérations **réversibles en pratique**, donc moins
 effrayantes qu'elles n'en ont l'air.
 
-> Commandes exactes de tous ces gestes → [cheat-sheet Git](git.md#annuler--corriger).
+> Commandes exactes de tous ces gestes → [cheat-sheet Git](../cheat-sheets/git.md#annuler--corriger).
 
 ## Worktree : plusieurs répertoires de travail pour un même dépôt
 
@@ -482,7 +482,7 @@ stateDiagram-v2
 
 ## Voir aussi
 
-- [Cheat-sheet Git](git.md) — les commandes et enchaînements concrets.
-- [Cheat-sheet gh (GitHub CLI)](gh-cli.md) — interaction avec GitHub.
+- [Cheat-sheet Git](../cheat-sheets/git.md) — les commandes et enchaînements concrets.
+- [Cheat-sheet gh (GitHub CLI)](../cheat-sheets/gh-cli.md) — interaction avec GitHub.
 - Documentation officielle : [git-scm.com/book](https://git-scm.com/book/fr/v2)
   (le chapitre « Git Internals » détaille le modèle d'objets).

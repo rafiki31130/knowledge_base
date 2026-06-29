@@ -383,7 +383,7 @@ persistent fixup, and the continuity probe reported zero interruption.
   <https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Usemaintenancemode>
 - Splunk Docs — Move a peer to a new site (the out-of-scope *move* operation):
   <https://help.splunk.com/en/splunk-enterprise/administer/manage-indexers-and-indexer-clusters/9.0/manage-a-multisite-indexer-cluster/move-a-peer-to-a-new-site>
-- See also: [ITIL change governance](itil-gouvernance-changement.md)
+- See also: [ITIL change governance](../methodologies/itil-gouvernance-changement.md)
   for the surrounding change-management process.
 
 ---

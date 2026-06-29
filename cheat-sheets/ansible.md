@@ -104,6 +104,6 @@ ansible-galaxy role init <nom_role>                  # squelette d'un nouveau r�
 
 ## Voir aussi
 
-- [Secrets & SSH](secrets-ssh.md) — Ansible se connecte par SSH ; clés, agent, `~/.ssh/config`
-- [Linux & systemd](linux-systemd.md) — ce qu'Ansible pilote sur les hôtes (services, paquets)
-- [Git](git.md) — versionner playbooks et rôles (fichiers vault chiffrés inclus)
+- [Secrets & SSH](./secrets-ssh.md) — Ansible se connecte par SSH ; clés, agent, `~/.ssh/config`
+- [Linux & systemd](./linux-systemd.md) — ce qu'Ansible pilote sur les hôtes (services, paquets)
+- [Git](./git.md) — versionner playbooks et rôles (fichiers vault chiffrés inclus)

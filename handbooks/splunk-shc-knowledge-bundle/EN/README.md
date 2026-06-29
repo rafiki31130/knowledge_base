@@ -1,6 +1,6 @@
 # Splunk SHC Knowledge Bundle Handbook
 
-> 🇫🇷 **Version française disponible** : [`../README.md`](r_knowledge_base_pro/handbooks/splunk-shc-knowledge-bundle/README.md)
+> 🇫🇷 **Version française disponible** : [`../README.md`](../README.md)
 
 > A short manual for the administrator or architect of an on-prem Splunk Enterprise who can already deploy a Search Head Cluster and an indexer cluster, but who is tripped up by the real behavior of *knowledge bundles* in a distributed environment. Three different Splunk mechanisms all carry the word "bundle": this handbook pulls them apart, describes how each one propagates, provides the decision tree for the most frequent incidents, and consolidates the CLI / REST / logs / SPL investigation toolbox.
 
@@ -61,15 +61,15 @@ Facing an incident, the entry point is always the same: chapter 05 (decision tre
 
 | # | Chapter | Topic |
 | --- | --- | --- |
-| 00 | [Foundations — three bundles, one word](r_knowledge_base_pro/handbooks/splunk-shc-knowledge-bundle/EN/00-foundations.md) | Defensible lexicon, distinct mechanics, owners |
-| 01 | [SHC configuration bundle constitution on the deployer](01-shc-configuration-bundle.md) | `etc/shcluster/apps`, `splunk apply shcluster-bundle`, internal conf replication |
-| 02 | [Knowledge bundle constitution on the search head](02-knowledge-bundle-constitution.md) | Consolidation, hash, delta vs full, `distsearch.conf` |
-| 03 | [Replication to search peers](03-replication-to-peers.md) | Classic, cascading, mounted; `var/run/searchpeers/`; partial failures |
-| 04 | [Distributed search sequence](04-distributed-search-sequence.md) | bundle ready → fan-out → map → reduce |
-| 05 | [Troubleshooting — decision tree](05-troubleshooting-decision-tree.md) | Symptom → hypotheses → action → escalation criterion |
-| 06 | [Investigations — toolbox](r_knowledge_base_pro/handbooks/splunk-shc-knowledge-bundle/EN/06-investigations.md) | CLI, REST, `splunkd.log` filters, SPL `index=_internal` |
-| 07 | [Pitfalls and anti-patterns](07-pitfalls-and-anti-patterns.md) | Content, topology, CLI, 9.x terminology |
-| 99 | [Quick diag cheatsheet](99-diag-cheatsheet.md) | One printable page |
+| 00 | [Foundations — three bundles, one word](./00-foundations.md) | Defensible lexicon, distinct mechanics, owners |
+| 01 | [SHC configuration bundle constitution on the deployer](./01-shc-configuration-bundle.md) | `etc/shcluster/apps`, `splunk apply shcluster-bundle`, internal conf replication |
+| 02 | [Knowledge bundle constitution on the search head](./02-knowledge-bundle-constitution.md) | Consolidation, hash, delta vs full, `distsearch.conf` |
+| 03 | [Replication to search peers](./03-replication-to-peers.md) | Classic, cascading, mounted; `var/run/searchpeers/`; partial failures |
+| 04 | [Distributed search sequence](./04-distributed-search-sequence.md) | bundle ready → fan-out → map → reduce |
+| 05 | [Troubleshooting — decision tree](./05-troubleshooting-decision-tree.md) | Symptom → hypotheses → action → escalation criterion |
+| 06 | [Investigations — toolbox](./06-investigations.md) | CLI, REST, `splunkd.log` filters, SPL `index=_internal` |
+| 07 | [Pitfalls and anti-patterns](./07-pitfalls-and-anti-patterns.md) | Content, topology, CLI, 9.x terminology |
+| 99 | [Quick diag cheatsheet](./99-diag-cheatsheet.md) | One printable page |
 
 ## Conventions
 

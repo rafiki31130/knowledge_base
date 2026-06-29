@@ -567,9 +567,9 @@ flowchart TD
 
 ## Voir aussi
 
-- [Splunk (administration / CLI)](splunk-admin.md) — CLI `splunk`, `btool`,
+- [Splunk (administration / CLI)](./splunk-admin.md) — CLI `splunk`, `btool`,
   `_internal`, start/stop.
-- [Splunk — concepts & SPL](r_knowledge_base_pro/splunk/README.md) — architecture, indexers, search
+- [Splunk — concepts & SPL](../splunk/README.md) — architecture, indexers, search
   heads, langage de recherche.
-- [Secrets & SSH](secrets-ssh.md) — récupération de tokens via `op` pour les
+- [Secrets & SSH](./secrets-ssh.md) — récupération de tokens via `op` pour les
   appels REST authentifiés.

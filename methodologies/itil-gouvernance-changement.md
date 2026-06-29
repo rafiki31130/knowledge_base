@@ -7,7 +7,7 @@ service, mise en production, amélioration continue). Objectif : disposer du
 vocabulaire et de l'appareil de gouvernance tel qu'attendu en entreprise, puis
 savoir le **dégrader proprement** quand le contexte est plus léger.
 
-Modèle de documentation/CMDB associé : [itil-modele-documentation.md](itil-modele-documentation.md).
+Modèle de documentation/CMDB associé : [itil-modele-documentation.md](./itil-modele-documentation.md).
 
 ## Change Enablement (ex-Change Management)
 
@@ -122,7 +122,7 @@ l'organisation collaborent pour créer de la valeur. Pièces maîtresses :
 | **Service Level Management** | définir et suivre les niveaux de service | **SLA** (avec le client), **OLA** (entre équipes internes), **UC** (*underpinning contract*, avec un fournisseur) |
 | **Release Management** | planifier la **mise à disposition** d'une version | distinct du déploiement technique ; gère le *quoi/quand* livré |
 | **Deployment Management** | **déployer** techniquement vers les environnements | s'appuie sur la **DML** |
-| **Service Configuration Mgmt** | maintenir le modèle des CI (CMDB) | cf. [itil-modele-documentation.md](itil-modele-documentation.md) |
+| **Service Configuration Mgmt** | maintenir le modèle des CI (CMDB) | cf. [itil-modele-documentation.md](./itil-modele-documentation.md) |
 | **Continual Service Improvement (CSI)** | améliorer en continu | *CSI register* ; modèle en 7 étapes ; la PIR l'alimente |
 
 Distinguer **Incident / Problème / Erreur connue / Changement** est fondamental :

@@ -51,7 +51,7 @@ dans un bloc ` ```mermaid `. GitHub le rend nativement — c'est ce qui permet d
 - **Fallback ASCII** seulement si Mermaid n'est pas adapté (table de correspondance, art figé).
 - **Anonymisation identique** : les libellés de nœuds suivent les mêmes interdits que le texte
   (placeholders génériques `service-01`, `<tenant>`, jamais d'hôte/IP/FQDN réel).
-- Syntaxe, types de diagrammes et pièges : [cheat-sheet Mermaid](mermaid-obsidian.md).
+- Syntaxe, types de diagrammes et pièges : [cheat-sheet Mermaid](./cheat-sheets/mermaid-obsidian.md).
 
 ## Format des liens
 

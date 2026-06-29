@@ -27,7 +27,7 @@ Every chapter is independent. The proposed order is pedagogical, not mandatory: 
 
 | # | Chapter | Status |
 | --- | --- | --- |
-| 0 | [Foundations — how Splunk thinks](r_knowledge_base_pro/handbooks/splunk-user-handbook/00-foundations.md) | Available |
+| 0 | [Foundations — how Splunk thinks](00-foundations.md) | Available |
 | 1 | [SPL — anatomy of a good search](01-spl-search-anatomy.md) | Available |
 | 2 | [SPL — `stats`, transforming commands and the `\| stats` mindset](02-spl-transforming-and-stats.md) | Available |
 | 3 | [SPL — correlating events: joins, subsearches, lookups](03-spl-correlation-joins-lookups.md) | Available |

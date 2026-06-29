@@ -125,6 +125,6 @@ YAML), et certains via la CLI selon l'installation.
 
 ## Voir aussi
 
-- [Docker](docker.md) — Home Assistant Core/Container tourne souvent en conteneur.
-- [Secrets & SSH](secrets-ssh.md) — stocker `$HA_TOKEN` hors historique ; `secrets.yaml` côté HA.
-- [Réseau & pfSense](reseau-pfsense.md) — exposition réseau et reverse-proxy devant HA.
+- [Docker](./docker.md) — Home Assistant Core/Container tourne souvent en conteneur.
+- [Secrets & SSH](./secrets-ssh.md) — stocker `$HA_TOKEN` hors historique ; `secrets.yaml` côté HA.
+- [Réseau & pfSense](./reseau-pfsense.md) — exposition réseau et reverse-proxy devant HA.

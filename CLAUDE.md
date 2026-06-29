@@ -31,7 +31,7 @@ Substituts à utiliser : `indexer-01`, `10.0.0.0/24`, `example.com`,
 Si du sensible a été commité : **la page est compromise** — réécrire, ne pas
 se contenter d'un revert (l'historique GitHub est public).
 
-Détails complets → [`CONTRIBUTING.md`](CONTRIBUTING.md)
+Détails complets → [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 
 ## Workflow git
 
@@ -53,7 +53,7 @@ Branche unique : `main`. Pas de PR, pas de revue obligatoire.
 - Blocs de code annotés : ` ```spl `, ` ```bash `, ` ```json `…
 - **Schémas en Mermaid par défaut** : toute archi/flux/séquence/état s'illustre par un bloc
   ` ```mermaid ` (rendu nativement par GitHub), pas par une image — ASCII en fallback seul.
-  Libellés anonymisés comme le reste. Détails : [cheat-sheet Mermaid](mermaid-obsidian.md)
+  Libellés anonymisés comme le reste. Détails : [cheat-sheet Mermaid](./cheat-sheets/mermaid-obsidian.md)
 - Liens internes : markdown standard avec chemin relatif + extension `.md`
   (ex. `[texte](../concepts/parsing.md)`) — wikilinks `[[...]]` interdits
 - Langue : français par défaut

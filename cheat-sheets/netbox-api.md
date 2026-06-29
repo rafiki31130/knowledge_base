@@ -144,6 +144,6 @@ dev.delete()
 
 ## Voir aussi
 
-- [Réseau & pfSense](reseau-pfsense.md) — données réseau qu'on documente dans l'IPAM NetBox.
-- [Secrets & SSH](secrets-ssh.md) — stocker `$NETBOX_TOKEN` hors du code et de l'historique.
-- [GitHub CLI (gh)](gh-cli.md) — autre exemple d'API REST piloté en `gh api`/`curl`.
+- [Réseau & pfSense](./reseau-pfsense.md) — données réseau qu'on documente dans l'IPAM NetBox.
+- [Secrets & SSH](./secrets-ssh.md) — stocker `$NETBOX_TOKEN` hors du code et de l'historique.
+- [GitHub CLI (gh)](./gh-cli.md) — autre exemple d'API REST piloté en `gh api`/`curl`.

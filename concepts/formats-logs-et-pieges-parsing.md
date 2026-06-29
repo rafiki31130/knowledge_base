@@ -116,6 +116,6 @@ Pièges :
 
 ## Voir aussi
 
-- [Regex pour les logs : greedy, ancres, lookaround](regex-pour-logs.md)
-- [`_time` vs `_indextime` : ne pas les confondre](time-vs-indextime.md)
-- [Parsing phase : UF vs HF/indexer](parsing-phase-uf-vs-hf.md)
+- [Regex pour les logs : greedy, ancres, lookaround](./regex-pour-logs.md)
+- [`_time` vs `_indextime` : ne pas les confondre](../splunk/spl/time-vs-indextime.md)
+- [Parsing phase : UF vs HF/indexer](../splunk/concepts/parsing-phase-uf-vs-hf.md)

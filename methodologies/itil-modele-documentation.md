@@ -8,7 +8,7 @@ non maintenable. ITIL propose un modèle plus robuste : un service est un
 d'articulation est un **Service Model**. Cette fiche décrit ce modèle de façon
 générique, du plus léger (petite équipe) au plus complet (entreprise).
 
-Gouvernance du **changement** associée : [itil-gouvernance-changement.md](itil-gouvernance-changement.md).
+Gouvernance du **changement** associée : [itil-gouvernance-changement.md](./itil-gouvernance-changement.md).
 
 ## Les briques
 
@@ -126,7 +126,7 @@ relève surtout de la pratique **Service Configuration Management**, dont la
 finalité officielle est de *fournir un modèle des services montrant comment les
 CI travaillent ensemble*. Elle s'inscrit dans le **Service Value System (SVS)** et
 alimente toutes les autres pratiques (changement, incident, mise en production…),
-détaillées dans [itil-gouvernance-changement.md](itil-gouvernance-changement.md).
+détaillées dans [itil-gouvernance-changement.md](./itil-gouvernance-changement.md).
 
 ## À retenir
 

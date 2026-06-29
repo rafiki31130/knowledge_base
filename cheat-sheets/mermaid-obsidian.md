@@ -286,6 +286,6 @@ flowchart LR
 
 ## Voir aussi
 
-- [Git](git.md) — versionner la doc contenant les diagrammes.
+- [Git](./git.md) — versionner la doc contenant les diagrammes.
 - [Documentation officielle Mermaid](https://mermaid.js.org/intro/) — syntaxe complète et live editor.
 - [Live editor Mermaid](https://mermaid.live/) — tester un diagramme avant de le coller dans une note.

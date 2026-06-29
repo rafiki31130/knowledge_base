@@ -136,10 +136,11 @@ tail -f $SPLUNK_HOME/var/log/splunk/splunkd.log
   `advertiseRestartRequired` côté membre ; IDXC : reloader de conf côté peer). Une même
   conf peut RELOAD sur un SHC et RESTART sur un cluster d'indexers. Table de vérité par
   conf, méthode pour la déterminer soi-même, et pièges (purge d'app, suppression d'index,
-  searchable rolling restart) : [](r_knowledge_base_pro/splunk/concepts/rolling-restart-triggers.md).
+  searchable rolling restart) : [Déclencheurs de rolling restart — SHC & cluster
+  d'indexers](../splunk/concepts/rolling-restart-triggers.md).
 
 ## Voir aussi
 
-- [Splunk — concepts & SPL](r_knowledge_base_pro/splunk/README.md) — architecture, indexers, et le **langage de recherche SPL** (cette fiche ne couvre pas le SPL).
-- [Linux & systemd](linux-systemd.md) — gérer le service `splunkd` sous systemd, lire les logs hôte.
-- [Secrets & SSH](secrets-ssh.md) — stocker le mot de passe admin hors historique (`$SPLUNK_PASSWORD`).
+- [Splunk — concepts & SPL](../splunk/README.md) — architecture, indexers, et le **langage de recherche SPL** (cette fiche ne couvre pas le SPL).
+- [Linux & systemd](./linux-systemd.md) — gérer le service `splunkd` sous systemd, lire les logs hôte.
+- [Secrets & SSH](./secrets-ssh.md) — stocker le mot de passe admin hors historique (`$SPLUNK_PASSWORD`).

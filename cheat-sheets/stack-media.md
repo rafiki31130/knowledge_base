@@ -16,7 +16,7 @@ un serveur de lecture. Cette fiche couvre les **patterns d'exploitation** : exé
 Docker/Compose, API des services, port-forwarding via le conteneur VPN, et healthchecks.
 
 Les commandes Docker/Compose génériques ne sont pas reprises ici → voir
-[Docker](docker.md). Placeholders : `<container>`, `example.com`, `$API_KEY`.
+[Docker](./docker.md). Placeholders : `<container>`, `example.com`, `$API_KEY`.
 
 ## Commandes de base
 
@@ -149,6 +149,6 @@ docker inspect -f '{{.State.Health.Status}}' <container>   # état de santé bru
 
 ## Voir aussi
 
-- [Docker](docker.md) — exploitation Docker/Compose de base (logs, volumes, nettoyage, recreate).
-- [Réseau & pfSense](reseau-pfsense.md) — routage, VPN et port-forwarding côté réseau.
-- [Secrets & SSH](secrets-ssh.md) — garder `$API_KEY` et les identifiants VPN hors des fichiers versionnés.
+- [Docker](./docker.md) — exploitation Docker/Compose de base (logs, volumes, nettoyage, recreate).
+- [Réseau & pfSense](./reseau-pfsense.md) — routage, VPN et port-forwarding côté réseau.
+- [Secrets & SSH](./secrets-ssh.md) — garder `$API_KEY` et les identifiants VPN hors des fichiers versionnés.
