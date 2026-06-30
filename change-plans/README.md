@@ -81,7 +81,7 @@ prevents readers from treating the fiche as a copy-paste runbook.
 - [Splunk multisite cluster — in-place site id rename](./splunk-indexer-cluster-site-id-change.md)
   — lab-validated method (`splunk offline` + `site_mappings`), with the
   experiment results that justify it.
-- [Splunk — attach additional search head clusters to an existing indexer cluster](./splunk-add-search-head-clusters-to-indexer-cluster.md)
-  — search-tier expansion: register extra SHCs as search heads of one indexer
-  cluster (`[clustering]` vs `[shclustering]` secrets), preserving distributed
-  search groups, with the multi-cluster-search variant noted.
+- [Splunk — attach one search head (cluster) to additional indexer clusters](./splunk-attach-search-head-to-additional-indexer-clusters.md)
+  — multi-cluster search: widen one existing SHC to search more indexer clusters
+  via per-cluster `[clustermanager:*]` stanzas (one `pass4SymmKey` per cluster),
+  scoped with distributed search groups (`splunk_server_group`).
